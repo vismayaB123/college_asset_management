@@ -1,0 +1,178 @@
+{% extends 'assets/public_base.html' %}
+
+{% block title %}Help & User Guide{% endblock %}
+
+{% block content %}
+<!-- Page Introduction -->
+<section class="hero-section text-center py-5">
+    <div class="container py-5">
+        <h1 class="display-4 fw-bold mb-4">Help & User Guide</h1>
+        <p class="lead text-muted mx-auto" style="max-width: 700px;">
+            Learn how to use Campus Assets to manage equipment, allocations, maintenance, notifications, settings, and reports.
+        </p>
+    </div>
+</section>
+
+<!-- Guide Sections -->
+<section class="py-5">
+    <div class="container">
+        <div class="row justify-content-center">
+            <div class="col-lg-8">
+                
+                <!-- Section 1 -->
+                <div class="card border-0 shadow-sm mb-5 bg-body">
+                    <div class="card-body p-4 p-md-5">
+                        <h3 class="fw-bold text-brand mb-4 d-flex align-items-center"><span class="badge bg-brand me-3">1</span> Managing Assets</h3>
+                        <ol class="text-muted mb-4 fs-5" style="line-height: 1.8;">
+                            <li>Navigate to the Assets section.</li>
+                            <li>Click Add Asset.</li>
+                            <li>Enter the asset code, name, category, quantity, location, condition, status, and other available information.</li>
+                            <li>Save the asset.</li>
+                            <li>Use search and filters to quickly locate assets.</li>
+                        </ol>
+                        <div class="alert alert-info border-0 bg-info bg-opacity-10 text-info-emphasis d-flex align-items-center mb-0">
+                            <i class="bi bi-info-circle-fill fs-5 me-3"></i>
+                            <div>The system protects inventory integrity by ensuring available quantities cannot exceed total quantities.</div>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Section 2 -->
+                <div class="card border-0 shadow-sm mb-5 bg-body">
+                    <div class="card-body p-4 p-md-5">
+                        <h3 class="fw-bold text-brand mb-4 d-flex align-items-center"><span class="badge bg-brand me-3">2</span> Allocating Assets</h3>
+                        <ol class="text-muted mb-4 fs-5" style="line-height: 1.8;">
+                            <li>Navigate to Allocations.</li>
+                            <li>Select an available asset.</li>
+                            <li>Choose the department.</li>
+                            <li>Enter the assigned person and quantity.</li>
+                            <li>Set allocation and expected return dates.</li>
+                            <li>Save the allocation.</li>
+                        </ol>
+                        <div class="alert alert-info border-0 bg-info bg-opacity-10 text-info-emphasis d-flex align-items-center mb-0">
+                            <i class="bi bi-info-circle-fill fs-5 me-3"></i>
+                            <div>Assets cannot be allocated beyond their available quantity.</div>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Section 3 -->
+                <div class="card border-0 shadow-sm mb-5 bg-body">
+                    <div class="card-body p-4 p-md-5">
+                        <h3 class="fw-bold text-brand mb-4 d-flex align-items-center"><span class="badge bg-brand me-3">3</span> Returning Allocated Assets</h3>
+                        <p class="lead text-muted mb-0">
+                            When an allocated asset is returned, use the Return action in the Allocations section. The system automatically updates the allocation status, records the return date, and restores the allocated quantity back to the asset's available inventory.
+                        </p>
+                    </div>
+                </div>
+
+                <!-- Section 4 -->
+                <div class="card border-0 shadow-sm mb-5 bg-body">
+                    <div class="card-body p-4 p-md-5">
+                        <h3 class="fw-bold text-brand mb-4 d-flex align-items-center"><span class="badge bg-brand me-3">4</span> Managing Maintenance</h3>
+                        <ol class="text-muted mb-4 fs-5" style="line-height: 1.8;">
+                            <li>Navigate to Maintenance.</li>
+                            <li>Add a maintenance record.</li>
+                            <li>Select the asset.</li>
+                            <li>Enter the maintenance description, date, technician, cost, and status.</li>
+                            <li>Update the record as maintenance progresses.</li>
+                        </ol>
+                        <div class="alert alert-info border-0 bg-info bg-opacity-10 text-info-emphasis d-flex align-items-center mb-0">
+                            <i class="bi bi-info-circle-fill fs-5 me-3"></i>
+                            <div>Assets with active Pending or In Progress maintenance records are visually identified as being under maintenance.</div>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Section 5 -->
+                <div class="card border-0 shadow-sm mb-5 bg-body">
+                    <div class="card-body p-4 p-md-5">
+                        <h3 class="fw-bold text-brand mb-4 d-flex align-items-center"><span class="badge bg-brand me-3">5</span> Understanding Notifications</h3>
+                        <div class="mb-4">
+                            <h5 class="fw-bold">Low Stock:</h5>
+                            <p class="text-muted">Alerts you when available asset quantities fall at or below the configured low stock threshold.</p>
+                        </div>
+                        <div class="mb-4">
+                            <h5 class="fw-bold">Overdue Allocations:</h5>
+                            <p class="text-muted">Alerts you when an asset has passed its expected return date and has not been returned.</p>
+                        </div>
+                        <div class="mb-4">
+                            <h5 class="fw-bold">Active Maintenance:</h5>
+                            <p class="text-muted">Alerts you when maintenance records are Pending or In Progress.</p>
+                        </div>
+                        <div class="alert alert-secondary border-0 d-flex align-items-center mb-0">
+                            <i class="bi bi-gear-fill fs-5 me-3"></i>
+                            <div>Notification preferences can be managed from the Settings page.</div>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Section 6 -->
+                <div class="card border-0 shadow-sm mb-5 bg-body">
+                    <div class="card-body p-4 p-md-5">
+                        <h3 class="fw-bold text-brand mb-4 d-flex align-items-center"><span class="badge bg-brand me-3">6</span> Settings and Preferences</h3>
+                        <div class="mb-3">
+                            <h5 class="fw-bold d-inline">Profile:</h5>
+                            <span class="text-muted">Update your personal information and profile picture.</span>
+                        </div>
+                        <div class="mb-3">
+                            <h5 class="fw-bold d-inline">Security:</h5>
+                            <span class="text-muted">Change your account password securely.</span>
+                        </div>
+                        <div class="mb-3">
+                            <h5 class="fw-bold d-inline">Notifications:</h5>
+                            <span class="text-muted">Choose which notification types you want to receive.</span>
+                        </div>
+                        <div class="mb-3">
+                            <h5 class="fw-bold d-inline">Appearance:</h5>
+                            <span class="text-muted">Choose between Light, Dark, or System appearance preferences.</span>
+                        </div>
+                        <div>
+                            <h5 class="fw-bold d-inline">System Preferences:</h5>
+                            <span class="text-muted">Administrators can manage global settings such as the low stock threshold.</span>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Section 7 -->
+                <div class="card border-0 shadow-sm bg-body">
+                    <div class="card-body p-4 p-md-5">
+                        <h3 class="fw-bold text-brand mb-4 d-flex align-items-center"><span class="badge bg-brand me-3">7</span> Reports and Analytics</h3>
+                        <p class="lead text-muted mb-4">The Reports page provides summary metrics, interactive charts, detailed tables, and filters.</p>
+                        
+                        <div class="row g-4 mb-4">
+                            <div class="col-md-4">
+                                <div class="p-3 bg-light rounded text-center h-100">
+                                    <i class="bi bi-filetype-csv fs-1 text-secondary mb-2"></i>
+                                    <h5 class="fw-bold">CSV</h5>
+                                    <p class="small text-muted mb-0">Useful for simple data viewing and spreadsheet applications.</p>
+                                </div>
+                            </div>
+                            <div class="col-md-4">
+                                <div class="p-3 bg-light rounded text-center h-100">
+                                    <i class="bi bi-filetype-xlsx fs-1 text-success mb-2"></i>
+                                    <h5 class="fw-bold">Excel</h5>
+                                    <p class="small text-muted mb-0">Provides a formatted spreadsheet suitable for further analysis.</p>
+                                </div>
+                            </div>
+                            <div class="col-md-4">
+                                <div class="p-3 bg-light rounded text-center h-100">
+                                    <i class="bi bi-filetype-pdf fs-1 text-danger mb-2"></i>
+                                    <h5 class="fw-bold">PDF</h5>
+                                    <p class="small text-muted mb-0">Provides a printable report format.</p>
+                                </div>
+                            </div>
+                        </div>
+
+                        <div class="alert alert-success border-0 bg-success bg-opacity-10 text-success-emphasis d-flex align-items-center mb-0">
+                            <i class="bi bi-check-circle-fill fs-5 me-3"></i>
+                            <div>Exports automatically respect the filters currently applied to the report.</div>
+                        </div>
+                    </div>
+                </div>
+
+            </div>
+        </div>
+    </div>
+</section>
+{% endblock %}

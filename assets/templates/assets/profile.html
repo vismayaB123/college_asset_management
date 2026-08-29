@@ -1,0 +1,157 @@
+{% extends 'base.html' %}
+
+{% block title %}Profile | Campus Assets{% endblock %}
+{% block page_title %}Profile{% endblock %}
+
+{% block content %}
+<div class="d-flex justify-content-between align-items-center mb-4">
+    <div>
+        <h2 class="h4 fw-bold" style="color: var(--sidebar-bg);">My Profile</h2>
+        <p class="text-muted mb-0">Manage your personal account information.</p>
+    </div>
+</div>
+
+<!-- Django Messages -->
+{% if messages %}
+    {% for message in messages %}
+        <div class="alert alert-{% if message.tags == 'error' %}danger{% else %}{{ message.tags }}{% endif %} alert-dismissible fade show shadow-sm" role="alert">
+            {{ message }}
+            <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Close"></button>
+        </div>
+    {% endfor %}
+{% endif %}
+
+<div class="row g-4">
+    <!-- Left Column - Profile Card -->
+    <div class="col-md-4">
+        <div class="card border-0 shadow-sm rounded-3 h-100">
+            <div class="card-body p-4 text-center">
+                {% if profile.profile_picture %}
+                    <div class="mx-auto mb-3" style="width: 120px; height: 120px; border-radius: 50%; overflow: hidden; border: 3px solid var(--sidebar-bg);">
+                        <img id="avatarPreview" src="{{ profile.profile_picture.url }}" alt="Profile Picture" style="width: 100%; height: 100%; object-fit: cover;">
+                    </div>
+                {% else %}
+                    <div id="avatarFallback" class="mx-auto mb-3" style="width: 120px; height: 120px; background-color: var(--sidebar-active); color: #fff; border-radius: 50%; display: flex; align-items: center; justify-content: center; font-size: 3rem; font-weight: 600; border: 3px solid var(--sidebar-bg);">
+                        {{ request.user.username|make_list|first|upper }}
+                    </div>
+                    <div class="mx-auto mb-3 d-none" id="avatarPreviewContainer" style="width: 120px; height: 120px; border-radius: 50%; overflow: hidden; border: 3px solid var(--sidebar-bg);">
+                        <img id="avatarPreviewImg" src="#" alt="Profile Picture Preview" style="width: 100%; height: 100%; object-fit: cover;">
+                    </div>
+                {% endif %}
+                
+                <h5 class="fw-bold mb-1">{{ request.user.get_full_name|default:request.user.username }}</h5>
+                <p class="text-muted small mb-3">{{ request.user.email|default:"No email provided" }}</p>
+                
+                <div class="d-flex justify-content-center gap-2 flex-wrap mb-4">
+                    {% if request.user.is_superuser %}
+                        <span class="badge bg-primary bg-opacity-10 text-primary rounded-pill">Primary System Administrator</span>
+                    {% else %}
+                        <span class="badge bg-secondary bg-opacity-10 text-secondary rounded-pill">{{ profile.get_role_display }}</span>
+                    {% endif %}
+                    
+                    {% if profile.account_status == 'APPROVED' %}
+                        <span class="badge bg-success bg-opacity-10 text-success rounded-pill"><i class="bi bi-check-circle-fill me-1"></i> Approved</span>
+                    {% elif profile.account_status == 'PENDING' %}
+                        <span class="badge bg-warning bg-opacity-10 text-warning rounded-pill"><i class="bi bi-hourglass-split me-1"></i> Pending</span>
+                    {% elif profile.account_status == 'DISABLED' %}
+                        <span class="badge bg-secondary bg-opacity-10 text-secondary rounded-pill"><i class="bi bi-slash-circle me-1"></i> Disabled</span>
+                    {% endif %}
+                </div>
+                
+                <hr class="text-muted opacity-25">
+                
+                <div class="text-start mt-4">
+                    <div class="mb-3">
+                        <small class="text-muted d-block fw-medium mb-1">Username</small>
+                        <div class="fw-medium text-dark">{{ request.user.username }}</div>
+                    </div>
+                    <div class="mb-3">
+                        <small class="text-muted d-block fw-medium mb-1">Date Joined</small>
+                        <div class="small text-dark"><i class="bi bi-calendar-event me-2"></i>{{ request.user.date_joined|date:"F d, Y" }}</div>
+                    </div>
+                    <div class="mb-3">
+                        <small class="text-muted d-block fw-medium mb-1">Last Login</small>
+                        <div class="small text-dark"><i class="bi bi-clock-history me-2"></i>{{ request.user.last_login|date:"F d, Y, h:i a"|default:"Never" }}</div>
+                    </div>
+                </div>
+                
+                <div class="mt-4 pt-3 border-top text-start">
+                    <p class="text-muted small mb-2"><i class="bi bi-shield-check me-1"></i> Account Security</p>
+                    <a href="{% url 'assets:settings' %}" class="btn btn-sm btn-link text-decoration-none px-0" style="color: var(--sidebar-bg);">
+                        Manage password in Settings <i class="bi bi-arrow-right ms-1"></i>
+                    </a>
+                </div>
+            </div>
+        </div>
+    </div>
+    
+    <!-- Right Column - Edit Form -->
+    <div class="col-md-8">
+        <div class="card border-0 shadow-sm rounded-3 h-100">
+            <div class="card-header bg-white border-bottom-0 pt-4 pb-0 px-4">
+                <h5 class="fw-bold mb-0">Edit Profile</h5>
+            </div>
+            <div class="card-body p-4">
+                <form action="{% url 'assets:profile' %}" method="POST" enctype="multipart/form-data">
+                    {% csrf_token %}
+                    
+                    <div class="mb-4">
+                        <label class="form-label fw-medium small">Profile Picture</label>
+                        <input type="file" id="profilePictureInput" name="profile_picture" class="form-control bg-light" accept="image/*">
+                        <div class="form-text">Select an image to change your profile photo.</div>
+                    </div>
+
+                    <div class="row g-4">
+                        <div class="col-md-6">
+                            <label class="form-label fw-medium small">First Name</label>
+                            <input type="text" name="first_name" class="form-control bg-light" value="{{ request.user.first_name }}" maxlength="150">
+                        </div>
+                        <div class="col-md-6">
+                            <label class="form-label fw-medium small">Last Name</label>
+                            <input type="text" name="last_name" class="form-control bg-light" value="{{ request.user.last_name }}" maxlength="150">
+                        </div>
+                        <div class="col-12">
+                            <label class="form-label fw-medium small">Email Address</label>
+                            <input type="email" name="email" class="form-control bg-light" value="{{ request.user.email }}" maxlength="254">
+                        </div>
+                        <div class="col-12">
+                            <label class="form-label fw-medium small text-muted">Username <i class="bi bi-info-circle ms-1" title="Username cannot be changed"></i></label>
+                            <input type="text" class="form-control bg-light" value="{{ request.user.username }}" disabled>
+                            <div class="form-text">Your username is used for login and cannot be changed here.</div>
+                        </div>
+                    </div>
+                    
+                    <div class="mt-4 pt-3 border-top">
+                        <button type="submit" class="btn btn-success px-4 py-2" style="background-color: var(--sidebar-bg); border-color: var(--sidebar-bg);">
+                            <i class="bi bi-check2 me-1"></i> Save Changes
+                        </button>
+                    </div>
+                </form>
+            </div>
+        </div>
+    </div>
+</div>
+
+<script>
+document.addEventListener("DOMContentLoaded", function() {
+    const input = document.getElementById("profilePictureInput");
+    
+    input.addEventListener("change", function(event) {
+        if (event.target.files && event.target.files[0]) {
+            const reader = new FileReader();
+            reader.onload = function(e) {
+                const previewImgExisting = document.getElementById("avatarPreview");
+                if (previewImgExisting) {
+                    previewImgExisting.src = e.target.result;
+                } else {
+                    document.getElementById("avatarFallback").classList.add("d-none");
+                    document.getElementById("avatarPreviewContainer").classList.remove("d-none");
+                    document.getElementById("avatarPreviewImg").src = e.target.result;
+                }
+            }
+            reader.readAsDataURL(event.target.files[0]);
+        }
+    });
+});
+</script>
+{% endblock %}

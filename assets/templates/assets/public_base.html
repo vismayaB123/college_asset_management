@@ -1,0 +1,452 @@
+<!DOCTYPE html>
+<html lang="en" data-bs-theme="light">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>{% block title %}Campus Assets{% endblock %} | Asset Management System</title>
+    
+    <!-- Bootstrap 5 CSS -->
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
+    <!-- Bootstrap Icons -->
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.10.5/font/bootstrap-icons.css" rel="stylesheet">
+    
+    <script>
+        // Apply theme early to prevent flash
+        const savedTheme = localStorage.getItem('theme') || 'system';
+        if (savedTheme === 'dark' || (savedTheme === 'system' && window.matchMedia('(prefers-color-scheme: dark)').matches)) {
+            document.documentElement.setAttribute('data-bs-theme', 'dark');
+        }
+    </script>
+
+    <style>
+        :root {
+            /* Premium SaaS Palette */
+            --primary: #163f2b;
+            --primary-dark: #0d2b1d;
+            --primary-light: #eaf4ed;
+            --accent: #8fd14f;
+            --accent-soft: #dff2c8;
+            --background: #f7f8f6;
+            --surface: #ffffff;
+            --text-primary: #1f2933;
+            --text-secondary: #68737d;
+            --border: #e8ece8;
+            --font-family-base: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, "Helvetica Neue", Arial, sans-serif;
+        }
+        
+        [data-bs-theme="dark"] {
+            --primary: #2c5a3f;
+            --primary-dark: #163f2b;
+            --primary-light: #163f2b;
+            --background: #101814;
+            --surface: #17241d;
+            --text-primary: #e8ece8;
+            --text-secondary: #a0aab2;
+            --border: #23362a;
+        }
+
+        body {
+            background-color: var(--background);
+            color: var(--text-primary);
+            font-family: var(--font-family-base);
+            /* Subtle page transition */
+            opacity: 0;
+            transition: opacity 0.3s ease-in-out;
+        }
+
+        body.page-loaded {
+            opacity: 1;
+        }
+
+        .text-brand { color: var(--primary) !important; }
+        .bg-brand { background-color: var(--primary) !important; }
+        .text-accent { color: var(--accent) !important; }
+
+        /* Full-screen Loader */
+        #startup-loader {
+            position: fixed;
+            top: 0; left: 0; width: 100%; height: 100%;
+            background-color: var(--primary);
+            z-index: 9999;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+            color: #ffffff;
+            transition: opacity 0.5s ease-out, visibility 0.5s;
+        }
+
+        .loader-icon {
+            font-size: 3rem;
+            margin-bottom: 1rem;
+            opacity: 0;
+            transform: scale(0.8);
+            animation: loaderFadeIn 0.5s ease forwards;
+        }
+
+        .loader-text {
+            font-weight: 600;
+            letter-spacing: 1px;
+            opacity: 0;
+            animation: loaderFadeIn 0.5s ease forwards 0.2s;
+        }
+
+        .loader-line-container {
+            width: 150px;
+            height: 2px;
+            background-color: rgba(255,255,255,0.2);
+            margin-top: 1.5rem;
+            border-radius: 2px;
+            overflow: hidden;
+            opacity: 0;
+            animation: loaderFadeIn 0.5s ease forwards 0.4s;
+        }
+
+        .loader-line {
+            height: 100%;
+            width: 0%;
+            background-color: var(--accent);
+            animation: loaderProgress 1s ease-in-out forwards 0.5s;
+        }
+
+        @keyframes loaderFadeIn {
+            to { opacity: 1; transform: scale(1); }
+        }
+        @keyframes loaderProgress {
+            to { width: 100%; }
+        }
+
+        @media (prefers-reduced-motion: reduce) {
+            * {
+                animation-duration: 0.01ms !important;
+                animation-iteration-count: 1 !important;
+                transition-duration: 0.01ms !important;
+                scroll-behavior: auto !important;
+            }
+        }
+
+        /* Navbar Styling */
+        .public-navbar-container {
+            background-color: var(--surface);
+            border-bottom: 1px solid var(--border);
+            padding: 1rem 0;
+            transition: all 0.3s ease;
+        }
+        
+        .navbar-brand {
+            font-weight: 700;
+            letter-spacing: -0.5px;
+            color: var(--text-primary) !important;
+        }
+
+        .nav-link {
+            color: var(--text-secondary);
+            font-weight: 500;
+            position: relative;
+            padding: 0.5rem 1rem;
+        }
+
+        .nav-link:hover {
+            color: var(--primary);
+        }
+
+        .nav-link::after {
+            content: '';
+            position: absolute;
+            width: 0; height: 2px;
+            bottom: 0; left: 50%;
+            background-color: var(--accent);
+            transition: all 0.3s ease;
+            transform: translateX(-50%);
+        }
+        
+        .nav-link:hover::after {
+            width: 80%;
+        }
+
+        /* Footer Styling */
+        footer {
+            background-color: var(--surface);
+            border-top: 1px solid var(--border);
+            padding: 4rem 0 2rem;
+            color: var(--text-secondary);
+        }
+
+        .footer-heading {
+            color: var(--text-primary);
+            font-weight: 700;
+            margin-bottom: 1.5rem;
+        }
+        
+        .footer-link {
+            color: var(--text-secondary);
+            text-decoration: none;
+            transition: color 0.2s ease;
+            display: inline-block;
+            margin-bottom: 0.5rem;
+        }
+        
+        .footer-link:hover {
+            color: var(--primary);
+        }
+
+        .social-icon {
+            display: inline-flex;
+            align-items: center;
+            justify-content: center;
+            width: 36px; height: 36px;
+            border-radius: 50%;
+            background-color: var(--primary-light);
+            color: var(--primary);
+            transition: all 0.2s ease;
+            margin-right: 0.5rem;
+        }
+
+        [data-bs-theme="dark"] .social-icon {
+            background-color: var(--border);
+            color: var(--text-primary);
+        }
+
+        .social-icon:hover {
+            background-color: var(--primary);
+            color: #fff;
+        }
+
+        #scrollTopBtn {
+            position: fixed;
+            bottom: 30px;
+            right: 30px;
+            width: 45px;
+            height: 45px;
+            border-radius: 50%;
+            background-color: var(--primary);
+            color: white;
+            border: none;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            opacity: 0;
+            visibility: hidden;
+            transition: all 0.3s ease;
+            box-shadow: 0 4px 12px rgba(0,0,0,0.15);
+            z-index: 1000;
+        }
+
+        #scrollTopBtn.visible {
+            opacity: 1;
+            visibility: visible;
+        }
+        
+        #scrollTopBtn:hover {
+            transform: translateY(-3px);
+            background-color: var(--primary-dark);
+        }
+        
+        .btn-brand-outline {
+            border: 1px solid var(--border);
+            color: var(--text-primary);
+            font-weight: 500;
+        }
+        .btn-brand-outline:hover {
+            background-color: var(--primary-light);
+            border-color: var(--primary);
+            color: var(--primary);
+        }
+        [data-bs-theme="dark"] .btn-brand-outline:hover {
+            background-color: var(--border);
+            color: var(--text-primary);
+        }
+
+    </style>
+    {% block extra_css %}{% endblock %}
+</head>
+<body class="d-flex flex-column min-vh-100">
+
+    <!-- Startup Loader -->
+    <div id="startup-loader">
+        <i class="bi bi-box-seam-fill loader-icon"></i>
+        <div class="loader-text h4 mb-0">Campus Assets</div>
+        <div class="small text-white-50 mt-1" style="opacity: 0; animation: loaderFadeIn 0.5s ease forwards 0.2s;">College Asset Management</div>
+        <div class="loader-line-container">
+            <div class="loader-line"></div>
+        </div>
+    </div>
+
+    <!-- Public Navbar -->
+    <header class="public-navbar-container sticky-top">
+        <div class="container">
+            <nav class="navbar navbar-expand-lg p-0">
+                <a class="navbar-brand d-flex align-items-center gap-2" href="{% url 'assets:home' %}">
+                    <i class="bi bi-box-seam-fill text-brand fs-4"></i>
+                    <div class="d-flex flex-column lh-1">
+                        <span>Campus Assets</span>
+                        <span style="font-size: 0.6rem; font-weight: normal;" class="text-muted mt-1">College Asset Management</span>
+                    </div>
+                </a>
+                
+                <button class="navbar-toggler border-0 shadow-none" type="button" data-bs-toggle="collapse" data-bs-target="#publicNavbar" aria-controls="publicNavbar" aria-expanded="false" aria-label="Toggle navigation">
+                    <i class="bi bi-list fs-1 text-primary"></i>
+                </button>
+                
+                <div class="collapse navbar-collapse" id="publicNavbar">
+                    <ul class="navbar-nav mx-auto mb-2 mb-lg-0 gap-lg-3 mt-3 mt-lg-0">
+                        <li class="nav-item"><a class="nav-link" href="{% url 'assets:home' %}">Home</a></li>
+                        <li class="nav-item"><a class="nav-link" href="{% url 'assets:home' %}#features">Features</a></li>
+                        <li class="nav-item"><a class="nav-link" href="{% url 'assets:home' %}#how-it-works">How It Works</a></li>
+                        <li class="nav-item"><a class="nav-link" href="{% url 'assets:about' %}">About</a></li>
+                        <li class="nav-item"><a class="nav-link" href="{% url 'assets:help' %}">Help</a></li>
+                    </ul>
+                    <div class="d-flex align-items-center gap-3 mt-3 mt-lg-0">
+                        <button id="themeToggle" class="btn btn-link text-secondary p-0 text-decoration-none fs-5" aria-label="Toggle theme">
+                            <i class="bi bi-moon-stars"></i>
+                        </button>
+                        {% if request.user.is_authenticated %}
+                            <a href="{% url 'assets:dashboard' %}" class="btn btn-brand bg-brand text-white px-4 rounded-pill fw-medium">Dashboard</a>
+                        {% else %}
+                            <a href="{% url 'assets:login' %}" class="btn btn-brand-outline px-4 rounded-pill">Login</a>
+                            <a href="{% url 'assets:register' %}" class="btn btn-brand bg-brand text-white px-4 rounded-pill fw-medium">Create Account</a>
+                        {% endif %}
+                    </div>
+                </div>
+            </nav>
+        </div>
+    </header>
+
+    <!-- Main Content -->
+    <main class="flex-grow-1">
+        {% block content %}{% endblock %}
+    </main>
+
+    <!-- Premium Footer -->
+    <footer class="mt-auto">
+        <div class="container">
+            <div class="row gy-5 mb-5">
+                <div class="col-lg-4 pe-lg-5">
+                    <h5 class="navbar-brand d-flex align-items-center gap-2 mb-3">
+                        <i class="bi bi-box-seam-fill text-brand"></i> Campus Assets
+                    </h5>
+                    <p class="small mb-4 pe-md-4">A smarter way for colleges and institutions to manage, track, allocate, and maintain their assets in one centralized platform.</p>
+                    <div class="d-flex">
+                        <a href="#" class="social-icon" aria-label="LinkedIn"><i class="bi bi-linkedin"></i></a>
+                        <a href="#" class="social-icon" aria-label="Twitter"><i class="bi bi-twitter-x"></i></a>
+                        <a href="#" class="social-icon" aria-label="GitHub"><i class="bi bi-github"></i></a>
+                    </div>
+                </div>
+                
+                <div class="col-6 col-lg-2">
+                    <h6 class="footer-heading">Quick Links</h6>
+                    <div class="d-flex flex-column">
+                        <a href="{% url 'assets:home' %}" class="footer-link small">Home</a>
+                        <a href="{% url 'assets:about' %}" class="footer-link small">About</a>
+                        <a href="{% url 'assets:help' %}" class="footer-link small">Help</a>
+                        <a href="{% url 'assets:login' %}" class="footer-link small">Login</a>
+                    </div>
+                </div>
+                
+                <div class="col-6 col-lg-3">
+                    <h6 class="footer-heading">Features</h6>
+                    <div class="d-flex flex-column">
+                        <a href="{% url 'assets:home' %}#features" class="footer-link small">Asset Management</a>
+                        <a href="{% url 'assets:home' %}#features" class="footer-link small">Allocations</a>
+                        <a href="{% url 'assets:home' %}#features" class="footer-link small">Maintenance</a>
+                        <a href="{% url 'assets:home' %}#features" class="footer-link small">Reports & Analytics</a>
+                    </div>
+                </div>
+                
+                <div class="col-lg-3">
+                    <h6 class="footer-heading">Support</h6>
+                    <div class="d-flex flex-column">
+                        <a href="{% url 'assets:help' %}" class="footer-link small">Help Center</a>
+                        <a href="{% url 'assets:help' %}" class="footer-link small">System Guide</a>
+                        <a href="#" class="footer-link small">Contact Us</a>
+                        <a href="#" class="footer-link small">Privacy Policy</a>
+                    </div>
+                </div>
+            </div>
+            
+            <div class="d-flex flex-column flex-md-row justify-content-between align-items-center border-top pt-4 mt-2 mb-2">
+                <p class="small mb-0">© {% now "Y" %} Campus Assets. All rights reserved.</p>
+            </div>
+        </div>
+    </footer>
+
+    <!-- Scroll to Top Button -->
+    <button id="scrollTopBtn" aria-label="Scroll to top"><i class="bi bi-arrow-up"></i></button>
+
+    <!-- Bootstrap JS Bundle -->
+    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
+    
+    <script>
+        // Page transition and Loader Logic
+        document.addEventListener('DOMContentLoaded', () => {
+            const loader = document.getElementById('startup-loader');
+            
+            // Check if user prefers reduced motion
+            const prefersReducedMotion = window.matchMedia('(prefers-reduced-motion: reduce)').matches;
+            
+            if (prefersReducedMotion || sessionStorage.getItem('campusAssetsLoaderShown')) {
+                // Skip full loader if already shown or if reduced motion preferred
+                loader.style.display = 'none';
+                setTimeout(() => { document.body.classList.add('page-loaded'); }, 50);
+            } else {
+                // Show loader for first time visit
+                sessionStorage.setItem('campusAssetsLoaderShown', 'true');
+                
+                // Allow animation to play then hide loader
+                setTimeout(() => {
+                    loader.style.opacity = '0';
+                    loader.style.visibility = 'hidden';
+                    setTimeout(() => { 
+                        document.body.classList.add('page-loaded'); 
+                        loader.style.display = 'none';
+                    }, 500);
+                }, 1400); // ~1.4s loader visibility
+            }
+        });
+
+        // Theme Toggle Logic
+        const themeBtn = document.getElementById('themeToggle');
+        const themeIcon = themeBtn.querySelector('i');
+        
+        function updateThemeIcon() {
+            const currentTheme = document.documentElement.getAttribute('data-bs-theme');
+            if (currentTheme === 'dark') {
+                themeIcon.classList.replace('bi-moon-stars', 'bi-sun');
+            } else {
+                themeIcon.classList.replace('bi-sun', 'bi-moon-stars');
+            }
+        }
+        updateThemeIcon();
+
+        themeBtn.addEventListener('click', () => {
+            const currentTheme = document.documentElement.getAttribute('data-bs-theme');
+            const newTheme = currentTheme === 'dark' ? 'light' : 'dark';
+            document.documentElement.setAttribute('data-bs-theme', newTheme);
+            localStorage.setItem('theme', newTheme);
+            updateThemeIcon();
+        });
+
+        window.matchMedia('(prefers-color-scheme: dark)').addEventListener('change', e => {
+            if(localStorage.getItem('theme') === 'system') {
+                const newTheme = e.matches ? 'dark' : 'light';
+                document.documentElement.setAttribute('data-bs-theme', newTheme);
+                updateThemeIcon();
+            }
+        });
+
+        // Scroll to Top Logic
+        const scrollTopBtn = document.getElementById('scrollTopBtn');
+        window.addEventListener('scroll', () => {
+            if (window.scrollY > 300) {
+                scrollTopBtn.classList.add('visible');
+            } else {
+                scrollTopBtn.classList.remove('visible');
+            }
+        });
+        
+        scrollTopBtn.addEventListener('click', () => {
+            window.scrollTo({ top: 0, behavior: 'smooth' });
+        });
+    </script>
+</body>
+</html>

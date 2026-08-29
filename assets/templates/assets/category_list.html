@@ -1,0 +1,205 @@
+{% extends 'base.html' %}
+
+{% block title %}Categories | Campus Assets{% endblock %}
+{% block page_title %}Categories{% endblock %}
+
+{% block content %}
+<div class="d-flex justify-content-between align-items-center mb-4">
+    <div>
+        <h2 class="h4 fw-bold" style="color: var(--sidebar-bg);">Asset Categories</h2>
+        <p class="text-muted mb-0">Organize and manage asset categories.</p>
+    </div>
+    <button class="btn btn-success d-flex align-items-center gap-2 px-3 py-2" data-bs-toggle="modal" data-bs-target="#addCategoryModal" style="background-color: var(--sidebar-bg); border-color: var(--sidebar-bg);">
+        <i class="bi bi-plus-lg"></i> Add Category
+    </button>
+</div>
+
+<!-- Django Messages -->
+{% if messages %}
+    {% for message in messages %}
+        <div class="alert alert-{% if message.tags == 'error' %}danger{% else %}{{ message.tags }}{% endif %} alert-dismissible fade show shadow-sm" role="alert">
+            {{ message }}
+            <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Close"></button>
+        </div>
+    {% endfor %}
+{% endif %}
+
+<!-- Main Card -->
+<div class="card border-0 shadow-sm rounded-3">
+    <div class="card-header bg-white border-bottom-0 pt-4 pb-0 px-4">
+        <div class="row">
+            <div class="col-md-4 col-sm-6">
+                <div class="input-group">
+                    <span class="input-group-text bg-light border-end-0"><i class="bi bi-search text-muted"></i></span>
+                    <input type="text" id="searchInput" class="form-control bg-light border-start-0 ps-0" placeholder="Search categories...">
+                </div>
+            </div>
+        </div>
+    </div>
+    <div class="card-body px-4 pb-4 pt-3">
+        {% if categories %}
+            <div class="table-responsive">
+                <table class="table table-hover align-middle mb-0" id="categoriesTable">
+                    <thead class="text-muted small">
+                        <tr>
+                            <th class="ps-0 border-top-0">Category Name</th>
+                            <th class="border-top-0">Description</th>
+                            <th class="border-top-0 text-center">Assets</th>
+                            <th class="border-top-0 text-end pe-0">Actions</th>
+                        </tr>
+                    </thead>
+                    <tbody class="border-top-0">
+                        {% for category in categories %}
+                        <tr class="category-row">
+                            <td class="ps-0">
+                                <div class="fw-medium text-dark category-name">{{ category.name }}</div>
+                            </td>
+                            <td>
+                                <span class="text-muted small text-truncate d-inline-block" style="max-width: 250px;">
+                                    {{ category.description|default:"No description" }}
+                                </span>
+                            </td>
+                            <td class="text-center">
+                                <span class="badge bg-light text-dark border rounded-pill px-3">{{ category.asset_count }}</span>
+                            </td>
+                            <td class="text-end pe-0">
+                                <button class="btn btn-sm btn-light text-primary me-1" data-bs-toggle="modal" data-bs-target="#editCategoryModal{{ category.pk }}" title="Edit">
+                                    <i class="bi bi-pencil-square"></i>
+                                </button>
+                                <button class="btn btn-sm btn-light text-danger" data-bs-toggle="modal" data-bs-target="#deleteCategoryModal{{ category.pk }}" title="Delete">
+                                    <i class="bi bi-trash3"></i>
+                                </button>
+                            </td>
+                        </tr>
+
+                        <!-- Edit Category Modal -->
+                        <div class="modal fade" id="editCategoryModal{{ category.pk }}" tabindex="-1" aria-labelledby="editCategoryModalLabel{{ category.pk }}" aria-hidden="true">
+                            <div class="modal-dialog modal-dialog-centered">
+                                <div class="modal-content border-0 shadow">
+                                    <div class="modal-header border-bottom-0 pb-0">
+                                        <h5 class="modal-title fw-bold" id="editCategoryModalLabel{{ category.pk }}" style="color: var(--sidebar-bg);">Edit Category</h5>
+                                        <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+                                    </div>
+                                    <form action="{% url 'assets:category_edit' category.pk %}" method="POST">
+                                        {% csrf_token %}
+                                        <div class="modal-body">
+                                            <div class="mb-3 text-start">
+                                                <label class="form-label fw-medium small">Category Name <span class="text-danger">*</span></label>
+                                                <input type="text" name="name" class="form-control bg-light" value="{{ category.name }}" required maxlength="100">
+                                            </div>
+                                            <div class="mb-3 text-start">
+                                                <label class="form-label fw-medium small">Description</label>
+                                                <textarea name="description" class="form-control bg-light" rows="3">{{ category.description }}</textarea>
+                                            </div>
+                                        </div>
+                                        <div class="modal-footer border-top-0 pt-0">
+                                            <button type="button" class="btn btn-light" data-bs-dismiss="modal">Cancel</button>
+                                            <button type="submit" class="btn btn-success px-4" style="background-color: var(--sidebar-bg); border-color: var(--sidebar-bg);">Save Changes</button>
+                                        </div>
+                                    </form>
+                                </div>
+                            </div>
+                        </div>
+
+                        <!-- Delete Category Modal -->
+                        <div class="modal fade" id="deleteCategoryModal{{ category.pk }}" tabindex="-1" aria-labelledby="deleteCategoryModalLabel{{ category.pk }}" aria-hidden="true">
+                            <div class="modal-dialog modal-dialog-centered">
+                                <div class="modal-content border-0 shadow">
+                                    <div class="modal-header border-bottom-0 pb-0">
+                                        <h5 class="modal-title fw-bold text-danger" id="deleteCategoryModalLabel{{ category.pk }}">Delete Category</h5>
+                                        <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+                                    </div>
+                                    <form action="{% url 'assets:category_delete' category.pk %}" method="POST">
+                                        {% csrf_token %}
+                                        <div class="modal-body text-start">
+                                            <p class="mb-0">Are you sure you want to delete the category <strong>"{{ category.name }}"</strong>?</p>
+                                            {% if category.asset_count > 0 %}
+                                            <div class="alert alert-warning mt-3 mb-0 d-flex gap-2">
+                                                <i class="bi bi-exclamation-triangle-fill mt-1"></i>
+                                                <small>This category has {{ category.asset_count }} related asset(s) and cannot be deleted until they are reassigned or removed.</small>
+                                            </div>
+                                            {% else %}
+                                            <div class="text-muted small mt-2">This action cannot be undone.</div>
+                                            {% endif %}
+                                        </div>
+                                        <div class="modal-footer border-top-0 pt-0">
+                                            <button type="button" class="btn btn-light" data-bs-dismiss="modal">Cancel</button>
+                                            <button type="submit" class="btn btn-danger px-4" {% if category.asset_count > 0 %}disabled{% endif %}>Delete</button>
+                                        </div>
+                                    </form>
+                                </div>
+                            </div>
+                        </div>
+
+                        {% endfor %}
+                    </tbody>
+                </table>
+            </div>
+        {% else %}
+            <!-- Empty State -->
+            <div class="text-center py-5">
+                <i class="bi bi-collection display-1 text-muted mb-4 d-block opacity-50"></i>
+                <h5 class="fw-medium text-dark mb-2">No categories have been added yet.</h5>
+                <p class="text-muted mb-4">Get started by creating your first asset category.</p>
+                <button class="btn btn-success px-4 py-2" data-bs-toggle="modal" data-bs-target="#addCategoryModal" style="background-color: var(--sidebar-bg); border-color: var(--sidebar-bg);">
+                    <i class="bi bi-plus-lg me-2"></i> Add Your First Category
+                </button>
+            </div>
+        {% endif %}
+    </div>
+</div>
+
+<!-- Add Category Modal -->
+<div class="modal fade" id="addCategoryModal" tabindex="-1" aria-labelledby="addCategoryModalLabel" aria-hidden="true">
+    <div class="modal-dialog modal-dialog-centered">
+        <div class="modal-content border-0 shadow">
+            <div class="modal-header border-bottom-0 pb-0">
+                <h5 class="modal-title fw-bold" id="addCategoryModalLabel" style="color: var(--sidebar-bg);">Add New Category</h5>
+                <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+            </div>
+            <form action="{% url 'assets:category_add' %}" method="POST">
+                {% csrf_token %}
+                <div class="modal-body text-start">
+                    <div class="mb-3">
+                        <label class="form-label fw-medium small">Category Name <span class="text-danger">*</span></label>
+                        <input type="text" name="name" class="form-control bg-light" placeholder="e.g. Electronics, Furniture" required maxlength="100">
+                    </div>
+                    <div class="mb-3">
+                        <label class="form-label fw-medium small">Description</label>
+                        <textarea name="description" class="form-control bg-light" rows="3" placeholder="Brief description of this category"></textarea>
+                    </div>
+                </div>
+                <div class="modal-footer border-top-0 pt-0">
+                    <button type="button" class="btn btn-light" data-bs-dismiss="modal">Cancel</button>
+                    <button type="submit" class="btn btn-success px-4" style="background-color: var(--sidebar-bg); border-color: var(--sidebar-bg);">Save Category</button>
+                </div>
+            </form>
+        </div>
+    </div>
+</div>
+
+<!-- Search Filtering Script -->
+<script>
+    document.addEventListener('DOMContentLoaded', function() {
+        const searchInput = document.getElementById('searchInput');
+        if (searchInput) {
+            searchInput.addEventListener('keyup', function() {
+                const query = this.value.toLowerCase();
+                const rows = document.querySelectorAll('.category-row');
+                
+                rows.forEach(row => {
+                    const nameCell = row.querySelector('.category-name');
+                    if (nameCell) {
+                        const name = nameCell.textContent.toLowerCase();
+                        if (name.includes(query)) {
+                            row.style.display = '';
+                        } else {
+                            row.style.display = 'none';
+                        }
+                    }
+                });
+            });
+        }
+    });
+</script>
+{% endblock %}

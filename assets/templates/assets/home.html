@@ -1,0 +1,765 @@
+{% extends 'assets/public_base.html' %}
+
+{% block title %}Asset Management{% endblock %}
+
+{% block extra_css %}
+<style>
+    /* Reveal Animation Base */
+    .reveal-up {
+        opacity: 0;
+        transform: translateY(30px);
+        transition: opacity 0.8s ease, transform 0.8s ease;
+    }
+    
+    .reveal-up.active {
+        opacity: 1;
+        transform: translateY(0);
+    }
+    
+    @media (prefers-reduced-motion: reduce) {
+        .reveal-up {
+            opacity: 1;
+            transform: translateY(0);
+            transition: none;
+        }
+    }
+
+    /* Hero Layout */
+    .hero-section {
+        padding: 5rem 0 6rem;
+        overflow: hidden;
+    }
+    
+    .hero-title-highlight {
+        color: var(--primary);
+        position: relative;
+        display: inline-block;
+    }
+    
+    .hero-title-highlight::after {
+        content: '';
+        position: absolute;
+        bottom: 5px;
+        left: 0;
+        width: 100%;
+        height: 8px;
+        background-color: var(--accent-soft);
+        z-index: -1;
+        border-radius: 4px;
+    }
+    
+    [data-bs-theme="dark"] .hero-title-highlight {
+        color: var(--accent);
+    }
+    [data-bs-theme="dark"] .hero-title-highlight::after {
+        background-color: rgba(143, 209, 79, 0.2);
+    }
+
+    .hero-benefits {
+        display: flex;
+        flex-wrap: wrap;
+        gap: 1.5rem;
+        margin-top: 2rem;
+    }
+    
+    .hero-benefit-item {
+        font-size: 0.9rem;
+        font-weight: 500;
+        color: var(--text-secondary);
+        display: flex;
+        align-items: center;
+        gap: 0.5rem;
+    }
+
+    /* Hero Dashboard Visual Mockup */
+    .dashboard-mockup {
+        background-color: var(--surface);
+        border: 1px solid var(--border);
+        border-radius: 1rem;
+        box-shadow: 0 20px 40px rgba(0,0,0,0.05);
+        padding: 1.25rem;
+        position: relative;
+        z-index: 2;
+        width: 100%;
+        max-width: 550px;
+        margin: 0 auto;
+    }
+
+    [data-bs-theme="dark"] .dashboard-mockup {
+        box-shadow: 0 20px 40px rgba(0,0,0,0.3);
+    }
+    
+    .dash-header {
+        height: 12px;
+        width: 100px;
+        background-color: var(--border);
+        border-radius: 6px;
+        margin-bottom: 1.5rem;
+    }
+    
+    .dash-grid {
+        display: grid;
+        grid-template-columns: 1fr 1fr;
+        gap: 1rem;
+        margin-bottom: 1rem;
+    }
+    
+    .dash-mini-card {
+        background-color: var(--background);
+        border-radius: 0.5rem;
+        padding: 1rem;
+        border: 1px solid var(--border);
+    }
+    
+    .dash-icon-box {
+        width: 32px; height: 32px;
+        border-radius: 6px;
+        background-color: var(--primary-light);
+        color: var(--primary);
+        display: flex; align-items: center; justify-content: center;
+        margin-bottom: 0.75rem;
+    }
+
+    .dash-value {
+        font-weight: 700;
+        font-size: 1.5rem;
+        line-height: 1;
+        margin-bottom: 0.25rem;
+        color: var(--text-primary);
+    }
+
+    .dash-label {
+        font-size: 0.7rem;
+        color: var(--text-secondary);
+        text-transform: uppercase;
+        letter-spacing: 0.5px;
+    }
+    
+    .dash-chart-area {
+        background-color: var(--background);
+        border: 1px solid var(--border);
+        border-radius: 0.5rem;
+        height: 120px;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+    }
+
+    .donut-placeholder {
+        width: 80px; height: 80px;
+        border-radius: 50%;
+        border: 12px solid var(--primary-light);
+        border-top-color: var(--primary);
+        border-right-color: var(--accent);
+    }
+
+    /* Floating Alert Card */
+    .floating-card {
+        position: absolute;
+        bottom: -20px;
+        left: -40px;
+        background-color: var(--surface);
+        border: 1px solid var(--border);
+        box-shadow: 0 10px 25px rgba(0,0,0,0.08);
+        border-radius: 0.75rem;
+        padding: 1rem;
+        z-index: 3;
+        width: 220px;
+        animation: floatCard 6s ease-in-out infinite;
+    }
+
+    [data-bs-theme="dark"] .floating-card {
+        box-shadow: 0 10px 25px rgba(0,0,0,0.4);
+    }
+
+    @keyframes floatCard {
+        0%, 100% { transform: translateY(0); }
+        50% { transform: translateY(-10px); }
+    }
+    
+    @media (prefers-reduced-motion: reduce) {
+        .floating-card { animation: none; }
+    }
+
+    /* Trusted Institutions */
+    .trusted-strip {
+        border-top: 1px solid var(--border);
+        border-bottom: 1px solid var(--border);
+        padding: 3rem 0;
+        background-color: var(--background);
+    }
+
+    .institution-name {
+        font-size: 1.1rem;
+        font-weight: 600;
+        color: var(--text-secondary);
+        opacity: 0.6;
+        transition: opacity 0.3s;
+        text-align: center;
+    }
+
+    .institution-name:hover {
+        opacity: 1;
+    }
+
+    /* Feature Cards */
+    .feature-card {
+        background-color: var(--surface);
+        border: 1px solid var(--border);
+        border-radius: 1rem;
+        padding: 2rem;
+        height: 100%;
+        transition: all 0.3s ease;
+    }
+    
+    .feature-card:hover {
+        transform: translateY(-6px);
+        box-shadow: 0 12px 24px rgba(0,0,0,0.05);
+        border-color: var(--primary-light);
+    }
+
+    [data-bs-theme="dark"] .feature-card:hover {
+        box-shadow: 0 12px 24px rgba(0,0,0,0.2);
+        border-color: var(--border);
+    }
+
+    .feature-icon-wrapper {
+        width: 48px; height: 48px;
+        border-radius: 50%;
+        background-color: var(--primary-light);
+        color: var(--primary);
+        display: flex; align-items: center; justify-content: center;
+        font-size: 1.25rem;
+        margin-bottom: 1.5rem;
+    }
+
+    [data-bs-theme="dark"] .feature-icon-wrapper {
+        background-color: var(--border);
+        color: var(--accent);
+    }
+
+    /* Stats Banner */
+    .stats-banner {
+        background-color: var(--primary-dark);
+        color: white;
+        border-radius: 1.5rem;
+        padding: 4rem 2rem;
+        margin: 5rem 0;
+    }
+
+    .stat-number {
+        font-size: 3rem;
+        font-weight: 700;
+        line-height: 1;
+        margin-bottom: 0.5rem;
+        color: #ffffff;
+    }
+
+    .stat-label {
+        font-size: 0.9rem;
+        color: rgba(255,255,255,0.7);
+        text-transform: uppercase;
+        letter-spacing: 1px;
+    }
+
+    /* Timeline */
+    .timeline-container {
+        position: relative;
+    }
+    
+    .timeline-step {
+        position: relative;
+        z-index: 2;
+    }
+    
+    .step-number {
+        width: 40px; height: 40px;
+        border-radius: 50%;
+        background-color: var(--primary);
+        color: white;
+        display: flex; align-items: center; justify-content: center;
+        font-weight: 600;
+        margin: 0 auto 1.5rem;
+    }
+
+    .step-title {
+        font-weight: 700;
+        color: var(--text-primary);
+        margin-bottom: 0.5rem;
+    }
+
+    .timeline-line {
+        position: absolute;
+        top: 20px; left: 12%; right: 12%;
+        height: 2px;
+        background-image: linear-gradient(90deg, var(--border) 50%, transparent 50%);
+        background-size: 15px 100%;
+        z-index: 1;
+    }
+    
+    @media (max-width: 991px) {
+        .timeline-line { display: none; }
+        .step-number { margin: 0 0 1rem 0; }
+    }
+
+    /* Testimonial */
+    .testimonial-card {
+        background-color: var(--surface);
+        border: 1px solid var(--border);
+        border-radius: 1rem;
+        padding: 2rem;
+        height: 100%;
+    }
+    
+    .quote-icon {
+        color: var(--primary-light);
+        font-size: 2rem;
+        margin-bottom: 1rem;
+    }
+    [data-bs-theme="dark"] .quote-icon {
+        color: var(--border);
+    }
+
+    /* CTA Banner */
+    .cta-banner {
+        background-color: var(--primary-dark);
+        border-radius: 1.5rem;
+        padding: 5rem 2rem;
+        text-align: center;
+        color: white;
+        margin-bottom: 4rem;
+        position: relative;
+        overflow: hidden;
+    }
+
+    .cta-banner::before {
+        content: '';
+        position: absolute;
+        top: -50%; left: -10%;
+        width: 50%; height: 200%;
+        background: radial-gradient(circle, rgba(143,209,79,0.1) 0%, rgba(255,255,255,0) 70%);
+        z-index: 1;
+    }
+</style>
+{% endblock %}
+
+{% block content %}
+<!-- HERO SECTION -->
+<section class="hero-section">
+    <div class="container">
+        <div class="row align-items-center gy-5">
+            <div class="col-lg-6 reveal-up" style="transition-delay: 0.3s;">
+                <div class="d-inline-flex align-items-center gap-2 px-3 py-1 rounded-pill mb-4" style="background-color: var(--primary-light); color: var(--primary); font-size: 0.75rem; font-weight: 600; letter-spacing: 1px;">
+                    <i class="bi bi-star-fill text-accent"></i> SMART CAMPUS MANAGEMENT
+                </div>
+                
+                <h1 class="display-4 fw-bold mb-4 text-dark pe-lg-4" style="color: var(--text-primary) !important;">
+                    Manage Campus Assets <br> <span class="hero-title-highlight">Smarter</span>, Faster, Together.
+                </h1>
+                
+                <p class="lead text-muted mb-5 pe-lg-5" style="font-size: 1.15rem;">
+                    Track, allocate, maintain, and analyze your institution's assets from one centralized platform designed to simplify campus operations.
+                </p>
+                
+                <div class="d-flex flex-wrap gap-3">
+                    {% if request.user.is_authenticated %}
+                        <a href="{% url 'assets:dashboard' %}" class="btn btn-brand bg-brand text-white btn-lg px-4 rounded-pill fw-medium">Go to Dashboard <i class="bi bi-arrow-right ms-2"></i></a>
+                    {% else %}
+                        <a href="{% url 'assets:register' %}" class="btn btn-brand bg-brand text-white btn-lg px-4 rounded-pill fw-medium">Get Started <i class="bi bi-arrow-right ms-2"></i></a>
+                        <a href="{% url 'assets:login' %}" class="btn btn-outline-secondary btn-lg px-4 rounded-pill bg-white" style="color: var(--text-primary);">Sign In</a>
+                    {% endif %}
+                    <a href="#features" class="btn btn-brand-outline btn-lg px-4 rounded-pill">Explore Features</a>
+                </div>
+                
+                <div class="hero-benefits">
+                    <div class="hero-benefit-item"><i class="bi bi-check-circle-fill text-accent"></i> Centralized Management</div>
+                    <div class="hero-benefit-item"><i class="bi bi-check-circle-fill text-accent"></i> Real-Time Tracking</div>
+                    <div class="hero-benefit-item"><i class="bi bi-check-circle-fill text-accent"></i> Smart Analytics</div>
+                </div>
+            </div>
+            
+            <div class="col-lg-6 position-relative reveal-up" style="transition-delay: 0.5s;">
+                <!-- Decorative Dashboard Mockup -->
+                <div class="dashboard-mockup">
+                    <div class="dash-header"></div>
+                    <div class="dash-grid">
+                        <div class="dash-mini-card">
+                            <div class="dash-icon-box"><i class="bi bi-box-seam"></i></div>
+                            <div class="dash-value">1,248</div>
+                            <div class="dash-label">Total Assets</div>
+                        </div>
+                        <div class="dash-mini-card">
+                            <div class="dash-icon-box text-success" style="background-color: rgba(25, 135, 84, 0.1);"><i class="bi bi-check-circle"></i></div>
+                            <div class="dash-value">980</div>
+                            <div class="dash-label">Available</div>
+                        </div>
+                        <div class="dash-mini-card">
+                            <div class="dash-icon-box text-info" style="background-color: rgba(13, 202, 240, 0.1);"><i class="bi bi-arrow-left-right"></i></div>
+                            <div class="dash-value">245</div>
+                            <div class="dash-label">Allocated</div>
+                        </div>
+                        <div class="dash-mini-card">
+                            <div class="dash-icon-box text-warning" style="background-color: rgba(255, 193, 7, 0.1);"><i class="bi bi-tools"></i></div>
+                            <div class="dash-value">23</div>
+                            <div class="dash-label">Maintenance</div>
+                        </div>
+                    </div>
+                    <div class="dash-chart-area">
+                        <div class="donut-placeholder"></div>
+                        <div class="ms-4">
+                            <div class="dash-label mb-2">Inventory Status</div>
+                            <div class="small fw-bold text-muted">78% Optimal</div>
+                        </div>
+                    </div>
+                </div>
+                
+                <!-- Floating Alert Card -->
+                <div class="floating-card">
+                    <div class="d-flex align-items-center gap-2 mb-2 pb-2 border-bottom">
+                        <i class="bi bi-exclamation-triangle-fill text-warning"></i>
+                        <span class="fw-bold small text-dark" style="color: var(--text-primary) !important;">Low Stock Alert</span>
+                    </div>
+                    <div class="d-flex justify-content-between align-items-center small text-muted">
+                        <span>Projectors</span>
+                        <span class="badge bg-danger rounded-pill">2 remaining</span>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</section>
+
+<!-- TRUSTED INSTITUTIONS -->
+<section class="trusted-strip reveal-up">
+    <div class="container text-center">
+        <p class="small text-muted fw-bold tracking-wider mb-4 text-uppercase">Built for Smarter Campus Operations</p>
+        <div class="row row-cols-2 row-cols-md-3 row-cols-lg-6 g-4 align-items-center justify-content-center">
+            <div class="col"><div class="institution-name">Engineering Dept</div></div>
+            <div class="col"><div class="institution-name">Central Library</div></div>
+            <div class="col"><div class="institution-name">Computer Science</div></div>
+            <div class="col"><div class="institution-name">Administration</div></div>
+            <div class="col"><div class="institution-name">Research Center</div></div>
+            <div class="col"><div class="institution-name">Student Services</div></div>
+        </div>
+    </div>
+</section>
+
+<!-- FEATURES SECTION -->
+<section id="features" class="py-5 my-5">
+    <div class="container">
+        <div class="text-center mb-5 reveal-up">
+            <span class="text-accent fw-bold small text-uppercase tracking-wider">Everything In One Place</span>
+            <h2 class="fw-bold mt-2" style="color: var(--text-primary);">Everything You Need to Manage Campus Assets</h2>
+            <p class="text-muted mx-auto mt-3" style="max-width: 600px;">From inventory tracking to maintenance and analytics, Campus Assets brings your operations together.</p>
+        </div>
+        
+        <div class="row g-4">
+            <!-- Card 1 -->
+            <div class="col-md-6 col-lg-4 reveal-up" style="transition-delay: 0.1s;">
+                <div class="feature-card">
+                    <div class="feature-icon-wrapper"><i class="bi bi-box-seam"></i></div>
+                    <h5 class="fw-bold mb-3" style="color: var(--text-primary);">Asset Management</h5>
+                    <p class="text-muted small mb-0">Maintain a complete and organized inventory of institutional assets, categories, and locations.</p>
+                </div>
+            </div>
+            <!-- Card 2 -->
+            <div class="col-md-6 col-lg-4 reveal-up" style="transition-delay: 0.2s;">
+                <div class="feature-card">
+                    <div class="feature-icon-wrapper"><i class="bi bi-people"></i></div>
+                    <h5 class="fw-bold mb-3" style="color: var(--text-primary);">Smart Allocations</h5>
+                    <p class="text-muted small mb-0">Allocate assets to departments while automatically maintaining accurate real-time availability records.</p>
+                </div>
+            </div>
+            <!-- Card 3 -->
+            <div class="col-md-6 col-lg-4 reveal-up" style="transition-delay: 0.3s;">
+                <div class="feature-card">
+                    <div class="feature-icon-wrapper"><i class="bi bi-arrow-repeat"></i></div>
+                    <h5 class="fw-bold mb-3" style="color: var(--text-primary);">Returns Tracking</h5>
+                    <p class="text-muted small mb-0">Track expected and actual return dates with a clear, auditable allocation and accountability history.</p>
+                </div>
+            </div>
+            <!-- Card 4 -->
+            <div class="col-md-6 col-lg-4 reveal-up" style="transition-delay: 0.1s;">
+                <div class="feature-card">
+                    <div class="feature-icon-wrapper"><i class="bi bi-wrench-adjustable"></i></div>
+                    <h5 class="fw-bold mb-3" style="color: var(--text-primary);">Maintenance Management</h5>
+                    <p class="text-muted small mb-0">Record maintenance activities, monitor repair progress, and accurately track related maintenance costs.</p>
+                </div>
+            </div>
+            <!-- Card 5 -->
+            <div class="col-md-6 col-lg-4 reveal-up" style="transition-delay: 0.2s;">
+                <div class="feature-card">
+                    <div class="feature-icon-wrapper"><i class="bi bi-bell"></i></div>
+                    <h5 class="fw-bold mb-3" style="color: var(--text-primary);">Smart Notifications</h5>
+                    <p class="text-muted small mb-0">Stay informed about low stock thresholds, overdue allocations, and active maintenance requirements.</p>
+                </div>
+            </div>
+            <!-- Card 6 -->
+            <div class="col-md-6 col-lg-4 reveal-up" style="transition-delay: 0.3s;">
+                <div class="feature-card">
+                    <div class="feature-icon-wrapper"><i class="bi bi-pie-chart"></i></div>
+                    <h5 class="fw-bold mb-3" style="color: var(--text-primary);">Reports & Analytics</h5>
+                    <p class="text-muted small mb-0">Transform asset data into clear insights with interactive charts and downloadable PDF/CSV reports.</p>
+                </div>
+            </div>
+        </div>
+    </div>
+</section>
+
+<!-- STATISTICS BANNER -->
+<section class="container reveal-up">
+    <div class="stats-banner shadow-lg">
+        <div class="row text-center gy-5">
+            <div class="col-md-3">
+                <div class="stat-number counter" data-target="1248">0</div>
+                <div class="stat-label">Assets Tracked</div>
+            </div>
+            <div class="col-md-3">
+                <div class="stat-number counter" data-target="24">0</div>
+                <div class="stat-label">Departments</div>
+            </div>
+            <div class="col-md-3">
+                <div class="stat-number counter" data-target="320">0</div>
+                <div class="stat-label">Allocations Managed</div>
+            </div>
+            <div class="col-md-3">
+                <div class="stat-number d-flex justify-content-center">
+                    <span class="counter" data-target="98">0</span><span>%</span>
+                </div>
+                <div class="stat-label">Operational Visibility</div>
+            </div>
+        </div>
+    </div>
+</section>
+
+<!-- HOW IT WORKS -->
+<section id="how-it-works" class="py-5 my-5">
+    <div class="container">
+        <div class="text-center mb-5 pb-4 reveal-up">
+            <span class="text-accent fw-bold small text-uppercase tracking-wider">How It Works</span>
+            <h2 class="fw-bold mt-2" style="color: var(--text-primary);">Simple Management. Clear Visibility.</h2>
+            <p class="text-muted mx-auto mt-3" style="max-width: 600px;">Get started with Campus Assets in just a few simple steps.</p>
+        </div>
+        
+        <div class="timeline-container reveal-up">
+            <div class="timeline-line"></div>
+            <div class="row gy-5 text-center">
+                <div class="col-lg-3 timeline-step">
+                    <div class="step-number">01</div>
+                    <h5 class="step-title">Add Your Assets</h5>
+                    <p class="text-muted small px-3">Create and organize your campus inventory with categories, quantities, conditions, and availability.</p>
+                </div>
+                <div class="col-lg-3 timeline-step">
+                    <div class="step-number">02</div>
+                    <h5 class="step-title">Allocate & Track</h5>
+                    <p class="text-muted small px-3">Assign assets to departments and keep track of allocation status and return dates.</p>
+                </div>
+                <div class="col-lg-3 timeline-step">
+                    <div class="step-number">03</div>
+                    <h5 class="step-title">Maintain & Monitor</h5>
+                    <p class="text-muted small px-3">Record maintenance activities and stay informed through smart notifications.</p>
+                </div>
+                <div class="col-lg-3 timeline-step">
+                    <div class="step-number">04</div>
+                    <h5 class="step-title">Analyze & Improve</h5>
+                    <p class="text-muted small px-3">Use reports and analytics to understand asset usage and make better decisions.</p>
+                </div>
+            </div>
+        </div>
+    </div>
+</section>
+
+<!-- WHY CAMPUS ASSETS (SPLIT SECTION) -->
+<section class="py-5 bg-body-tertiary border-top border-bottom overflow-hidden reveal-up">
+    <div class="container py-4">
+        <div class="row align-items-center gy-5">
+            <div class="col-lg-6">
+                <div class="bg-brand rounded-4 p-5 text-center text-white shadow-lg position-relative" style="min-height: 400px; display: flex; flex-direction: column; justify-content: center;">
+                    <i class="bi bi-shield-check display-1 text-accent mb-4"></i>
+                    <h3 class="fw-bold">Secure & Reliable</h3>
+                    <p class="text-white-50 mt-2">Protected by Django authentication, ensuring your institution's data remains private and secure.</p>
+                </div>
+            </div>
+            <div class="col-lg-5 offset-lg-1">
+                <h2 class="fw-bold mb-4" style="color: var(--text-primary);">Built for the Way Campuses Actually Work</h2>
+                <p class="text-muted mb-5">Managing hundreds of college assets manually across multiple departments can lead to missing equipment, inaccurate inventory, and inefficient processes. We solve that.</p>
+                
+                <div class="d-flex flex-column gap-4">
+                    <div class="d-flex align-items-start gap-3">
+                        <i class="bi bi-eye text-primary fs-4"></i>
+                        <div>
+                            <h6 class="fw-bold mb-1" style="color: var(--text-primary);">Better Asset Visibility</h6>
+                            <p class="small text-muted mb-0">Know exactly what you own and where it is located.</p>
+                        </div>
+                    </div>
+                    <div class="d-flex align-items-start gap-3">
+                        <i class="bi bi-lightning text-primary fs-4"></i>
+                        <div>
+                            <h6 class="fw-bold mb-1" style="color: var(--text-primary);">Reduced Manual Work</h6>
+                            <p class="small text-muted mb-0">Automate inventory tracking during allocations and returns.</p>
+                        </div>
+                    </div>
+                    <div class="d-flex align-items-start gap-3">
+                        <i class="bi bi-journal-text text-primary fs-4"></i>
+                        <div>
+                            <h6 class="fw-bold mb-1" style="color: var(--text-primary);">Clear Allocation History</h6>
+                            <p class="small text-muted mb-0">Hold individuals and departments accountable for equipment.</p>
+                        </div>
+                    </div>
+                    <div class="d-flex align-items-start gap-3">
+                        <i class="bi bi-graph-up text-primary fs-4"></i>
+                        <div>
+                            <h6 class="fw-bold mb-1" style="color: var(--text-primary);">Actionable Insights</h6>
+                            <p class="small text-muted mb-0">Export PDF and Excel reports to justify budget requirements.</p>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</section>
+
+<!-- TESTIMONIALS -->
+<section class="py-5 my-5">
+    <div class="container">
+        <div class="text-center mb-5 pb-2 reveal-up">
+            <span class="text-accent fw-bold small text-uppercase tracking-wider">What Our Users Say</span>
+            <h2 class="fw-bold mt-2" style="color: var(--text-primary);">Built for Better Asset Management</h2>
+            <p class="text-muted small mt-2">(Demo Sample Use Cases)</p>
+        </div>
+        
+        <div class="row g-4">
+            <div class="col-md-4 reveal-up" style="transition-delay: 0.1s;">
+                <div class="testimonial-card">
+                    <i class="bi bi-quote quote-icon"></i>
+                    <p class="text-muted mb-4">"Campus Assets has made it easier for us to keep track of equipment and improve accountability across departments."</p>
+                    <div class="d-flex align-items-center gap-3">
+                        <div class="rounded-circle bg-secondary text-white d-flex align-items-center justify-content-center" style="width: 40px; height: 40px;">SJ</div>
+                        <div>
+                            <h6 class="fw-bold mb-0 small" style="color: var(--text-primary);">Dr. Sarah Johnson</h6>
+                            <div class="small text-muted" style="font-size: 0.75rem;">IT Director, Greenfield College</div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+            
+            <div class="col-md-4 reveal-up" style="transition-delay: 0.2s;">
+                <div class="testimonial-card">
+                    <i class="bi bi-quote quote-icon"></i>
+                    <p class="text-muted mb-4">"The reporting and allocation tracking tools help us make better decisions and use our resources more efficiently."</p>
+                    <div class="d-flex align-items-center gap-3">
+                        <div class="rounded-circle bg-secondary text-white d-flex align-items-center justify-content-center" style="width: 40px; height: 40px;">MB</div>
+                        <div>
+                            <h6 class="fw-bold mb-0 small" style="color: var(--text-primary);">Prof. Michael Brown</h6>
+                            <div class="small text-muted" style="font-size: 0.75rem;">Head of Operations, Northview Uni</div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+            
+            <div class="col-md-4 reveal-up" style="transition-delay: 0.3s;">
+                <div class="testimonial-card">
+                    <i class="bi bi-quote quote-icon"></i>
+                    <p class="text-muted mb-4">"Notifications and low-stock alerts ensure that we never lose track of important equipment and maintenance."</p>
+                    <div class="d-flex align-items-center gap-3">
+                        <div class="rounded-circle bg-secondary text-white d-flex align-items-center justify-content-center" style="width: 40px; height: 40px;">JW</div>
+                        <div>
+                            <h6 class="fw-bold mb-0 small" style="color: var(--text-primary);">Jane Williams</h6>
+                            <div class="small text-muted" style="font-size: 0.75rem;">Admin Manager, Oakridge Institute</div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</section>
+
+<!-- FINAL CTA -->
+<section class="container reveal-up">
+    <div class="cta-banner shadow-lg">
+        <div class="position-relative" style="z-index: 2;">
+            <h2 class="fw-bold mb-3 text-white">Ready to Simplify Campus Asset Management?</h2>
+            <p class="text-white-50 mb-5 mx-auto" style="max-width: 600px;">Bring your assets, allocations, maintenance, and insights together in one secure place.</p>
+            
+            <div class="d-flex justify-content-center gap-3 flex-wrap">
+                {% if request.user.is_authenticated %}
+                    <a href="{% url 'assets:dashboard' %}" class="btn btn-light text-brand btn-lg px-5 rounded-pill fw-bold">Open Dashboard</a>
+                {% else %}
+                    <a href="{% url 'assets:register' %}" class="btn btn-light text-brand btn-lg px-5 rounded-pill fw-bold">Create Administrator Account</a>
+                    <a href="{% url 'assets:login' %}" class="btn btn-outline-light btn-lg px-5 rounded-pill fw-bold">Sign In</a>
+                {% endif %}
+                <a href="#how-it-works" class="btn btn-outline-light btn-lg px-5 rounded-pill">Watch Demo</a>
+            </div>
+        </div>
+    </div>
+</section>
+
+<!-- INTERSECTION OBSERVER LOGIC -->
+<script>
+    document.addEventListener('DOMContentLoaded', () => {
+        // Reduced motion check
+        const prefersReducedMotion = window.matchMedia('(prefers-reduced-motion: reduce)').matches;
+        
+        // Setup Reveal Animations
+        const revealElements = document.querySelectorAll('.reveal-up');
+        
+        const revealObserver = new IntersectionObserver((entries, observer) => {
+            entries.forEach(entry => {
+                if (entry.isIntersecting) {
+                    entry.target.classList.add('active');
+                    observer.unobserve(entry.target);
+                }
+            });
+        }, {
+            root: null,
+            threshold: 0.1,
+            rootMargin: "0px 0px -50px 0px"
+        });
+
+        revealElements.forEach(el => {
+            if (prefersReducedMotion) {
+                el.classList.add('active'); // show immediately
+            } else {
+                revealObserver.observe(el);
+            }
+        });
+
+        // Setup Counter Animations
+        const counters = document.querySelectorAll('.counter');
+        const counterObserver = new IntersectionObserver((entries, observer) => {
+            entries.forEach(entry => {
+                if (entry.isIntersecting) {
+                    const counter = entry.target;
+                    const target = +counter.getAttribute('data-target');
+                    
+                    if (prefersReducedMotion) {
+                        counter.innerText = target;
+                        observer.unobserve(counter);
+                        return;
+                    }
+
+                    const duration = 2000; // ms
+                    const stepTime = Math.abs(Math.floor(duration / target));
+                    
+                    let current = 0;
+                    const timer = setInterval(() => {
+                        // Increase by dynamic step for huge numbers, else by 1
+                        const increment = target > 500 ? Math.ceil(target / 50) : 1;
+                        current += increment;
+                        if (current >= target) {
+                            counter.innerText = target;
+                            clearInterval(timer);
+                        } else {
+                            counter.innerText = current;
+                        }
+                    }, stepTime > 10 ? stepTime : 10);
+                    
+                    observer.unobserve(counter);
+                }
+            });
+        }, { threshold: 0.5 });
+        
+        counters.forEach(counter => counterObserver.observe(counter));
+    });
+</script>
+{% endblock %}

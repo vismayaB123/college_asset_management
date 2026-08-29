@@ -1,0 +1,763 @@
+{% extends 'base.html' %}
+
+{% block title %}Reports & Analytics | Campus Assets{% endblock %}
+{% block page_title %}Reports & Analytics{% endblock %}
+
+{% block content %}
+<div class="mb-4">
+    <h2 class="h4 fw-bold" style="color: var(--sidebar-bg);">
+        <i class="bi bi-bar-chart-line me-2"></i> Reports & Analytics
+    </h2>
+    <p class="text-muted">Analyze your college assets, allocations, and maintenance activity.</p>
+</div>
+
+<!-- ROW 1: Asset Overview -->
+<h5 class="fw-bold mb-3 mt-4 text-secondary border-bottom pb-2">Asset Overview</h5>
+<div class="row g-4 mb-4">
+    <div class="col-md-3 col-sm-6">
+        <div class="card border-0 shadow-sm rounded-3 h-100 p-3">
+            <div class="d-flex align-items-center mb-3">
+                <div class="bg-light rounded p-2 me-3 text-primary">
+                    <i class="bi bi-boxes fs-4"></i>
+                </div>
+                <h6 class="fw-bold mb-0">Total Assets</h6>
+            </div>
+            <h3 class="fw-bold text-dark mb-0">{{ total_assets }}</h3>
+            <p class="text-muted small mb-0 mt-1">Unique asset records</p>
+        </div>
+    </div>
+    
+    <div class="col-md-3 col-sm-6">
+        <div class="card border-0 shadow-sm rounded-3 h-100 p-3">
+            <div class="d-flex align-items-center mb-3">
+                <div class="bg-light rounded p-2 me-3 text-success">
+                    <i class="bi bi-cash-stack fs-4"></i>
+                </div>
+                <h6 class="fw-bold mb-0">Total Asset Value</h6>
+            </div>
+            <h3 class="fw-bold text-dark mb-0">₹{{ total_asset_value|floatformat:2 }}</h3>
+            <p class="text-muted small mb-0 mt-1">Estimated portfolio value</p>
+        </div>
+    </div>
+    
+    <div class="col-md-3 col-sm-6">
+        <div class="card border-0 shadow-sm rounded-3 h-100 p-3">
+            <div class="d-flex align-items-center mb-3">
+                <div class="bg-light rounded p-2 me-3 text-info">
+                    <i class="bi bi-box-seam fs-4"></i>
+                </div>
+                <h6 class="fw-bold mb-0">Total Quantity</h6>
+            </div>
+            <h3 class="fw-bold text-dark mb-0">{{ total_quantity }}</h3>
+            <p class="text-muted small mb-0 mt-1">Total physical units</p>
+        </div>
+    </div>
+    
+    <div class="col-md-3 col-sm-6">
+        <div class="card border-0 shadow-sm rounded-3 h-100 p-3">
+            <div class="d-flex align-items-center mb-3">
+                <div class="bg-light rounded p-2 me-3 text-primary">
+                    <i class="bi bi-check2-circle fs-4"></i>
+                </div>
+                <h6 class="fw-bold mb-0">Available Quantity</h6>
+            </div>
+            <h3 class="fw-bold text-dark mb-0">{{ available_quantity }}</h3>
+            <p class="text-muted small mb-0 mt-1">Units ready for allocation</p>
+        </div>
+    </div>
+</div>
+
+<!-- ROW 2: Allocation Insights -->
+<h5 class="fw-bold mb-3 mt-4 text-secondary border-bottom pb-2">Allocation Insights</h5>
+<div class="row g-4 mb-4">
+    <div class="col-md-3 col-sm-6">
+        <div class="card border-0 shadow-sm rounded-3 h-100 p-3">
+            <div class="d-flex align-items-center mb-3">
+                <div class="bg-light rounded p-2 me-3 text-info">
+                    <i class="bi bi-diagram-3 fs-4"></i>
+                </div>
+                <h6 class="fw-bold mb-0">Allocated Quantity</h6>
+            </div>
+            <h3 class="fw-bold text-dark mb-0">{{ allocated_quantity }}</h3>
+            <p class="text-muted small mb-0 mt-1">Total units currently deployed</p>
+        </div>
+    </div>
+    
+    <div class="col-md-3 col-sm-6">
+        <div class="card border-0 shadow-sm rounded-3 h-100 p-3">
+            <div class="d-flex align-items-center mb-3">
+                <div class="bg-light rounded p-2 me-3 text-primary">
+                    <i class="bi bi-arrow-left-right fs-4"></i>
+                </div>
+                <h6 class="fw-bold mb-0">Active Allocations</h6>
+            </div>
+            <h3 class="fw-bold text-dark mb-0">{{ active_allocations }}</h3>
+            <p class="text-muted small mb-0 mt-1">Ongoing department assignments</p>
+        </div>
+    </div>
+    
+    <div class="col-md-3 col-sm-6">
+        <div class="card border-0 shadow-sm rounded-3 h-100 p-3">
+            <div class="d-flex align-items-center mb-3">
+                <div class="bg-light rounded p-2 me-3 text-success">
+                    <i class="bi bi-arrow-return-left fs-4"></i>
+                </div>
+                <h6 class="fw-bold mb-0">Returned Allocations</h6>
+            </div>
+            <h3 class="fw-bold text-dark mb-0">{{ returned_allocations }}</h3>
+            <p class="text-muted small mb-0 mt-1">Successfully concluded assignments</p>
+        </div>
+    </div>
+    
+    <div class="col-md-3 col-sm-6">
+        <div class="card border-0 shadow-sm rounded-3 h-100 p-3 {% if overdue_allocations > 0 %}border border-danger border-opacity-50{% endif %}">
+            <div class="d-flex align-items-center mb-3">
+                <div class="bg-light rounded p-2 me-3 {% if overdue_allocations > 0 %}text-danger{% else %}text-secondary{% endif %}">
+                    <i class="bi bi-clock-history fs-4"></i>
+                </div>
+                <h6 class="fw-bold mb-0">Overdue Allocations</h6>
+            </div>
+            <h3 class="fw-bold {% if overdue_allocations > 0 %}text-danger{% else %}text-dark{% endif %} mb-0">{{ overdue_allocations }}</h3>
+            <p class="text-muted small mb-0 mt-1">Assignments past expected return</p>
+        </div>
+    </div>
+</div>
+
+<!-- ROW 3: Maintenance Analysis -->
+<h5 class="fw-bold mb-3 mt-4 text-secondary border-bottom pb-2">Maintenance Analysis</h5>
+<div class="row g-4 mb-5">
+    <div class="col-md-3 col-sm-6">
+        <div class="card border-0 shadow-sm rounded-3 h-100 p-3">
+            <div class="d-flex align-items-center mb-3">
+                <div class="bg-light rounded p-2 me-3 text-secondary">
+                    <i class="bi bi-file-earmark-text fs-4"></i>
+                </div>
+                <h6 class="fw-bold mb-0">Total Maintenance</h6>
+            </div>
+            <h3 class="fw-bold text-dark mb-0">{{ total_maintenance_records }}</h3>
+            <p class="text-muted small mb-0 mt-1">All historical repair records</p>
+        </div>
+    </div>
+    
+    <div class="col-md-3 col-sm-6">
+        <div class="card border-0 shadow-sm rounded-3 h-100 p-3 {% if active_maintenance > 0 %}border border-warning border-opacity-50{% endif %}">
+            <div class="d-flex align-items-center mb-3">
+                <div class="bg-light rounded p-2 me-3 {% if active_maintenance > 0 %}text-warning{% else %}text-secondary{% endif %}">
+                    <i class="bi bi-tools fs-4"></i>
+                </div>
+                <h6 class="fw-bold mb-0">Active Maintenance</h6>
+            </div>
+            <h3 class="fw-bold text-dark mb-0">{{ active_maintenance }}</h3>
+            <p class="text-muted small mb-0 mt-1">Pending or In Progress tasks</p>
+        </div>
+    </div>
+    
+    <div class="col-md-3 col-sm-6">
+        <div class="card border-0 shadow-sm rounded-3 h-100 p-3">
+            <div class="d-flex align-items-center mb-3">
+                <div class="bg-light rounded p-2 me-3 text-success">
+                    <i class="bi bi-wrench-adjustable-circle fs-4"></i>
+                </div>
+                <h6 class="fw-bold mb-0">Completed Maintenance</h6>
+            </div>
+            <h3 class="fw-bold text-dark mb-0">{{ completed_maintenance }}</h3>
+            <p class="text-muted small mb-0 mt-1">Successfully resolved issues</p>
+        </div>
+    </div>
+    
+    <div class="col-md-3 col-sm-6">
+        <div class="card border-0 shadow-sm rounded-3 h-100 p-3">
+            <div class="d-flex align-items-center mb-3">
+                <div class="bg-light rounded p-2 me-3 text-danger">
+                    <i class="bi bi-currency-rupee fs-4"></i>
+                </div>
+                <h6 class="fw-bold mb-0">Total Maint. Cost</h6>
+            </div>
+            <h3 class="fw-bold text-dark mb-0">₹{{ total_maintenance_cost|floatformat:2 }}</h3>
+            <p class="text-muted small mb-0 mt-1">Cumulative repair expenditure</p>
+        </div>
+    </div>
+</div>
+
+<!-- Charts Section -->
+<h5 class="fw-bold mb-3 mt-4 text-secondary border-bottom pb-2">Visual Analytics</h5>
+
+<div class="row g-4 mb-4">
+    <!-- Assets by Category -->
+    <div class="col-md-6">
+        <div class="card border-0 shadow-sm rounded-3 h-100">
+            <div class="card-header bg-white border-bottom-0 pt-3 pb-0 px-4">
+                <h6 class="fw-bold mb-0">Assets by Category</h6>
+            </div>
+            <div class="card-body p-4 d-flex justify-content-center align-items-center" style="min-height: 300px;">
+                <canvas id="categoryChart"></canvas>
+                <div id="categoryChartEmpty" class="text-muted small d-none"><i class="bi bi-inbox me-1"></i> No data available</div>
+            </div>
+        </div>
+    </div>
+    
+    <!-- Assets by Status -->
+    <div class="col-md-6">
+        <div class="card border-0 shadow-sm rounded-3 h-100">
+            <div class="card-header bg-white border-bottom-0 pt-3 pb-0 px-4">
+                <h6 class="fw-bold mb-0">Assets by Status</h6>
+            </div>
+            <div class="card-body p-4 d-flex justify-content-center align-items-center" style="min-height: 300px;">
+                <canvas id="statusChart"></canvas>
+                <div id="statusChartEmpty" class="text-muted small d-none"><i class="bi bi-inbox me-1"></i> No data available</div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<div class="row g-4 mb-4">
+    <!-- Assets by Condition -->
+    <div class="col-md-6">
+        <div class="card border-0 shadow-sm rounded-3 h-100">
+            <div class="card-header bg-white border-bottom-0 pt-3 pb-0 px-4">
+                <h6 class="fw-bold mb-0">Assets by Condition</h6>
+            </div>
+            <div class="card-body p-4 d-flex justify-content-center align-items-center" style="min-height: 300px;">
+                <canvas id="conditionChart"></canvas>
+                <div id="conditionChartEmpty" class="text-muted small d-none"><i class="bi bi-inbox me-1"></i> No data available</div>
+            </div>
+        </div>
+    </div>
+    
+    <!-- Department Allocations -->
+    <div class="col-md-6">
+        <div class="card border-0 shadow-sm rounded-3 h-100">
+            <div class="card-header bg-white border-bottom-0 pt-3 pb-0 px-4">
+                <h6 class="fw-bold mb-0">Department Allocations</h6>
+            </div>
+            <div class="card-body p-4 d-flex justify-content-center align-items-center" style="min-height: 300px;">
+                <canvas id="departmentChart"></canvas>
+                <div id="departmentChartEmpty" class="text-muted small d-none"><i class="bi bi-inbox me-1"></i> No data available</div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<div class="row g-4 mb-5">
+    <!-- Maintenance Cost Over Time -->
+    <div class="col-12">
+        <div class="card border-0 shadow-sm rounded-3">
+            <div class="card-header bg-white border-bottom-0 pt-3 pb-0 px-4">
+                <h6 class="fw-bold mb-0">Maintenance Cost Over Time</h6>
+            </div>
+            <div class="card-body p-4 d-flex justify-content-center align-items-center" style="min-height: 350px;">
+                <canvas id="maintenanceChart"></canvas>
+                <div id="maintenanceChartEmpty" class="text-muted small d-none"><i class="bi bi-inbox me-1"></i> No data available</div>
+            </div>
+        </div>
+</div>
+
+<!-- Detailed Reports Section -->
+<h5 class="fw-bold mb-3 mt-5 text-secondary border-bottom pb-2">Detailed Reports</h5>
+<p class="text-muted small mb-4">Filter and analyze detailed asset, allocation, and maintenance records.</p>
+
+<!-- Filter Panel -->
+<div class="card border-0 shadow-sm rounded-3 mb-4">
+    <div class="card-body p-4">
+        <form method="GET" action="{% url 'assets:reports' %}" class="row g-3">
+            <div class="col-md-3">
+                <label class="form-label small fw-bold">Category</label>
+                <select name="category" class="form-select form-select-sm">
+                    <option value="">All Categories</option>
+                    {% for c in categories %}
+                        <option value="{{ c.id }}" {% if request.GET.category == c.id|stringformat:"s" %}selected{% endif %}>{{ c.name }}</option>
+                    {% endfor %}
+                </select>
+            </div>
+            
+            <div class="col-md-3">
+                <label class="form-label small fw-bold">Department</label>
+                <select name="department" class="form-select form-select-sm">
+                    <option value="">All Departments</option>
+                    {% for d in departments %}
+                        <option value="{{ d.id }}" {% if request.GET.department == d.id|stringformat:"s" %}selected{% endif %}>{{ d.name }}</option>
+                    {% endfor %}
+                </select>
+            </div>
+            
+            <div class="col-md-3">
+                <label class="form-label small fw-bold">Asset Status</label>
+                <select name="asset_status" class="form-select form-select-sm">
+                    <option value="">All Statuses</option>
+                    {% for k, v in asset_status_choices %}
+                        <option value="{{ k }}" {% if request.GET.asset_status == k %}selected{% endif %}>{{ v }}</option>
+                    {% endfor %}
+                </select>
+            </div>
+            
+            <div class="col-md-3">
+                <label class="form-label small fw-bold">Allocation Status</label>
+                <select name="allocation_status" class="form-select form-select-sm">
+                    <option value="">All Statuses</option>
+                    {% for k, v in allocation_status_choices %}
+                        <option value="{{ k }}" {% if request.GET.allocation_status == k %}selected{% endif %}>{{ v }}</option>
+                    {% endfor %}
+                </select>
+            </div>
+            
+            <div class="col-md-3">
+                <label class="form-label small fw-bold">Maint. Status</label>
+                <select name="maintenance_status" class="form-select form-select-sm">
+                    <option value="">All Statuses</option>
+                    {% for k, v in maintenance_status_choices %}
+                        <option value="{{ k }}" {% if request.GET.maintenance_status == k %}selected{% endif %}>{{ v }}</option>
+                    {% endfor %}
+                </select>
+            </div>
+            
+            <div class="col-md-3">
+                <label class="form-label small fw-bold">Start Date</label>
+                <input type="date" name="start_date" class="form-control form-control-sm" value="{{ request.GET.start_date }}">
+            </div>
+            
+            <div class="col-md-3">
+                <label class="form-label small fw-bold">End Date</label>
+                <input type="date" name="end_date" class="form-control form-control-sm" value="{{ request.GET.end_date }}">
+            </div>
+            
+            <div class="col-md-3 d-flex align-items-end">
+                <button type="submit" class="btn btn-sm btn-primary w-100 me-2" style="background-color: var(--sidebar-bg); border-color: var(--sidebar-bg);">Apply Filters</button>
+                <a href="{% url 'assets:reports' %}" class="btn btn-sm btn-outline-secondary w-100">Reset</a>
+            </div>
+        </form>
+    </div>
+</div>
+
+<!-- Detailed Tables -->
+<div class="card border-0 shadow-sm rounded-3 mb-5">
+    <div class="card-header bg-white border-bottom-0 pt-3 pb-0 px-4">
+        <ul class="nav nav-tabs border-bottom-0" id="reportTabs" role="tablist">
+            <li class="nav-item" role="presentation">
+                <button class="nav-link active fw-bold text-dark" id="inventory-tab" data-bs-toggle="tab" data-bs-target="#inventory" type="button" role="tab" aria-selected="true">
+                    Asset Inventory
+                </button>
+            </li>
+            <li class="nav-item" role="presentation">
+                <button class="nav-link fw-bold text-dark" id="allocations-tab" data-bs-toggle="tab" data-bs-target="#allocations" type="button" role="tab" aria-selected="false">
+                    Allocations
+                </button>
+            </li>
+            <li class="nav-item" role="presentation">
+                <button class="nav-link fw-bold text-dark" id="maintenance-tab" data-bs-toggle="tab" data-bs-target="#maintenance" type="button" role="tab" aria-selected="false">
+                    Maintenance
+                </button>
+            </li>
+        </ul>
+    </div>
+    
+    <div class="card-body p-0">
+        <div class="tab-content" id="reportTabsContent">
+            
+            <!-- Asset Inventory Tab -->
+            <div class="tab-pane fade show active p-4" id="inventory" role="tabpanel" tabindex="0">
+                <div class="d-flex justify-content-between align-items-center mb-3">
+                    <p class="text-muted small mb-0">Showing {{ asset_report|length }} assets</p>
+                    <div class="dropdown">
+                        <button class="btn btn-sm btn-outline-secondary dropdown-toggle" type="button" data-bs-toggle="dropdown" aria-expanded="false">
+                            <i class="bi bi-download me-1"></i> Export
+                        </button>
+                        <ul class="dropdown-menu dropdown-menu-end shadow-sm border-0">
+                            <li><a class="dropdown-item" href="{% url 'assets:export_assets_csv' %}?{{ request.GET.urlencode }}"><i class="bi bi-filetype-csv text-success me-2"></i>Export CSV</a></li>
+                            <li><a class="dropdown-item" href="{% url 'assets:export_assets_excel' %}?{{ request.GET.urlencode }}"><i class="bi bi-file-earmark-spreadsheet text-success me-2"></i>Export Excel</a></li>
+                            <li><a class="dropdown-item" href="{% url 'assets:export_assets_pdf' %}?{{ request.GET.urlencode }}"><i class="bi bi-file-earmark-pdf text-danger me-2"></i>Export PDF</a></li>
+                        </ul>
+                    </div>
+                </div>
+                {% if asset_report %}
+                <div class="table-responsive">
+                    <table class="table table-hover align-middle">
+                        <thead class="table-light">
+                            <tr>
+                                <th>#</th>
+                                <th>Asset Code</th>
+                                <th>Asset Name</th>
+                                <th>Category</th>
+                                <th>Total</th>
+                                <th>Avail</th>
+                                <th>Alloc</th>
+                                <th>Condition</th>
+                                <th>Status</th>
+                                <th>Unit Cost</th>
+                                <th>Total Value</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            {% for asset in asset_report %}
+                            <tr>
+                                <td>{{ forloop.counter }}</td>
+                                <td class="fw-medium">{{ asset.asset_code }}</td>
+                                <td>{{ asset.name }}</td>
+                                <td>{{ asset.category.name }}</td>
+                                <td>{{ asset.quantity }}</td>
+                                <td>{{ asset.available_quantity }}</td>
+                                <td>{{ asset.allocated_qty }}</td>
+                                <td><span class="badge bg-secondary">{{ asset.get_condition_display }}</span></td>
+                                <td>
+                                    {% if asset.status == 'Available' %}
+                                        <span class="badge bg-success">Available</span>
+                                    {% elif asset.status == 'In Use' %}
+                                        <span class="badge bg-primary">In Use</span>
+                                    {% elif asset.status == 'Maintenance' %}
+                                        <span class="badge bg-warning text-dark">Maintenance</span>
+                                    {% else %}
+                                        <span class="badge bg-danger">{{ asset.get_status_display }}</span>
+                                    {% endif %}
+                                </td>
+                                <td>{% if asset.purchase_cost %}₹{{ asset.purchase_cost|floatformat:2 }}{% else %}-{% endif %}</td>
+                                <td>₹{{ asset.total_value|floatformat:2 }}</td>
+                            </tr>
+                            {% endfor %}
+                        </tbody>
+                    </table>
+                </div>
+                {% else %}
+                <div class="text-center py-5">
+                    <i class="bi bi-inbox text-muted mb-3 d-block" style="font-size: 2rem; opacity: 0.5;"></i>
+                    <p class="text-muted mb-0">No assets match the selected filters.</p>
+                </div>
+                {% endif %}
+            </div>
+            
+            <!-- Allocations Tab -->
+            <div class="tab-pane fade p-4" id="allocations" role="tabpanel" tabindex="0">
+                <div class="d-flex justify-content-between align-items-center mb-3">
+                    <p class="text-muted small mb-0">Showing {{ allocation_report|length }} allocations</p>
+                    <div class="dropdown">
+                        <button class="btn btn-sm btn-outline-secondary dropdown-toggle" type="button" data-bs-toggle="dropdown" aria-expanded="false">
+                            <i class="bi bi-download me-1"></i> Export
+                        </button>
+                        <ul class="dropdown-menu dropdown-menu-end shadow-sm border-0">
+                            <li><a class="dropdown-item" href="{% url 'assets:export_allocations_csv' %}?{{ request.GET.urlencode }}"><i class="bi bi-filetype-csv text-success me-2"></i>Export CSV</a></li>
+                            <li><a class="dropdown-item" href="{% url 'assets:export_allocations_excel' %}?{{ request.GET.urlencode }}"><i class="bi bi-file-earmark-spreadsheet text-success me-2"></i>Export Excel</a></li>
+                            <li><a class="dropdown-item" href="{% url 'assets:export_allocations_pdf' %}?{{ request.GET.urlencode }}"><i class="bi bi-file-earmark-pdf text-danger me-2"></i>Export PDF</a></li>
+                        </ul>
+                    </div>
+                </div>
+                {% if allocation_report %}
+                <div class="table-responsive">
+                    <table class="table table-hover align-middle">
+                        <thead class="table-light">
+                            <tr>
+                                <th>#</th>
+                                <th>Asset</th>
+                                <th>Department</th>
+                                <th>Assigned To</th>
+                                <th>Qty</th>
+                                <th>Alloc Date</th>
+                                <th>Exp Return</th>
+                                <th>Act Return</th>
+                                <th>Status</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            {% for alloc in allocation_report %}
+                            <tr>
+                                <td>{{ forloop.counter }}</td>
+                                <td>
+                                    <div class="fw-medium">{{ alloc.asset.name }}</div>
+                                    <div class="small text-muted">{{ alloc.asset.asset_code }}</div>
+                                </td>
+                                <td>{{ alloc.department.name }}</td>
+                                <td>{{ alloc.assigned_to|default:"-" }}</td>
+                                <td>{{ alloc.quantity }}</td>
+                                <td>{{ alloc.allocation_date|date:"M d, Y" }}</td>
+                                <td>{{ alloc.expected_return_date|date:"M d, Y"|default:"-" }}</td>
+                                <td>{{ alloc.return_date|date:"M d, Y"|default:"-" }}</td>
+                                <td>
+                                    {% if alloc.status == 'Active' %}
+                                        <span class="badge bg-primary">Active</span>
+                                    {% elif alloc.status == 'Returned' %}
+                                        <span class="badge bg-success">Returned</span>
+                                    {% endif %}
+                                </td>
+                            </tr>
+                            {% endfor %}
+                        </tbody>
+                    </table>
+                </div>
+                {% else %}
+                <div class="text-center py-5">
+                    <i class="bi bi-inbox text-muted mb-3 d-block" style="font-size: 2rem; opacity: 0.5;"></i>
+                    <p class="text-muted mb-0">No allocations match the selected filters.</p>
+                </div>
+                {% endif %}
+            </div>
+            
+            <!-- Maintenance Tab -->
+            <div class="tab-pane fade p-4" id="maintenance" role="tabpanel" tabindex="0">
+                <div class="d-flex justify-content-between align-items-center mb-3">
+                    <p class="text-muted small mb-0">Showing {{ maintenance_report|length }} maintenance records</p>
+                    <div class="dropdown">
+                        <button class="btn btn-sm btn-outline-secondary dropdown-toggle" type="button" data-bs-toggle="dropdown" aria-expanded="false">
+                            <i class="bi bi-download me-1"></i> Export
+                        </button>
+                        <ul class="dropdown-menu dropdown-menu-end shadow-sm border-0">
+                            <li><a class="dropdown-item" href="{% url 'assets:export_maintenance_csv' %}?{{ request.GET.urlencode }}"><i class="bi bi-filetype-csv text-success me-2"></i>Export CSV</a></li>
+                            <li><a class="dropdown-item" href="{% url 'assets:export_maintenance_excel' %}?{{ request.GET.urlencode }}"><i class="bi bi-file-earmark-spreadsheet text-success me-2"></i>Export Excel</a></li>
+                            <li><a class="dropdown-item" href="{% url 'assets:export_maintenance_pdf' %}?{{ request.GET.urlencode }}"><i class="bi bi-file-earmark-pdf text-danger me-2"></i>Export PDF</a></li>
+                        </ul>
+                    </div>
+                </div>
+                {% if maintenance_report %}
+                <div class="table-responsive">
+                    <table class="table table-hover align-middle">
+                        <thead class="table-light">
+                            <tr>
+                                <th>#</th>
+                                <th>Asset</th>
+                                <th>Description</th>
+                                <th>Date</th>
+                                <th>Technician</th>
+                                <th>Cost</th>
+                                <th>Status</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            {% for maint in maintenance_report %}
+                            <tr>
+                                <td>{{ forloop.counter }}</td>
+                                <td>
+                                    <div class="fw-medium">{{ maint.asset.name }}</div>
+                                    <div class="small text-muted">{{ maint.asset.asset_code }}</div>
+                                </td>
+                                <td>{{ maint.description|truncatechars:30 }}</td>
+                                <td>{{ maint.maintenance_date|date:"M d, Y" }}</td>
+                                <td>{{ maint.technician|default:"-" }}</td>
+                                <td>{% if maint.cost %}₹{{ maint.cost|floatformat:2 }}{% else %}-{% endif %}</td>
+                                <td>
+                                    {% if maint.status == 'Pending' %}
+                                        <span class="badge bg-secondary">Pending</span>
+                                    {% elif maint.status == 'In Progress' %}
+                                        <span class="badge bg-warning text-dark">In Progress</span>
+                                    {% elif maint.status == 'Completed' %}
+                                        <span class="badge bg-success">Completed</span>
+                                    {% endif %}
+                                </td>
+                            </tr>
+                            {% endfor %}
+                        </tbody>
+                    </table>
+                </div>
+                {% else %}
+                <div class="text-center py-5">
+                    <i class="bi bi-inbox text-muted mb-3 d-block" style="font-size: 2rem; opacity: 0.5;"></i>
+                    <p class="text-muted mb-0">No maintenance records match the selected filters.</p>
+                </div>
+                {% endif %}
+            </div>
+            
+        </div>
+    </div>
+</div>
+{% endblock %}
+
+{% block extra_scripts %}
+<script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+
+<!-- Data payload securely loaded via Django json_script -->
+{{ category_labels|json_script:"category-labels" }}
+{{ category_counts|json_script:"category-counts" }}
+{{ asset_status_labels|json_script:"status-labels" }}
+{{ asset_status_counts|json_script:"status-counts" }}
+{{ condition_labels|json_script:"condition-labels" }}
+{{ condition_counts|json_script:"condition-counts" }}
+{{ department_labels|json_script:"department-labels" }}
+{{ department_allocation_quantities|json_script:"department-counts" }}
+{{ maintenance_month_labels|json_script:"maintenance-labels" }}
+{{ maintenance_month_costs|json_script:"maintenance-costs" }}
+
+<script>
+document.addEventListener('DOMContentLoaded', function() {
+    // 1. Retrieve Data from securely embedded script tags
+    const catLabels = JSON.parse(document.getElementById('category-labels').textContent);
+    const catCounts = JSON.parse(document.getElementById('category-counts').textContent);
+    
+    const statLabels = JSON.parse(document.getElementById('status-labels').textContent);
+    const statCounts = JSON.parse(document.getElementById('status-counts').textContent);
+    
+    const condLabels = JSON.parse(document.getElementById('condition-labels').textContent);
+    const condCounts = JSON.parse(document.getElementById('condition-counts').textContent);
+    
+    const deptLabels = JSON.parse(document.getElementById('department-labels').textContent);
+    const deptCounts = JSON.parse(document.getElementById('department-counts').textContent);
+    
+    const maintLabels = JSON.parse(document.getElementById('maintenance-labels').textContent);
+    const maintCosts = JSON.parse(document.getElementById('maintenance-costs').textContent);
+
+    // 2. Dynamic Theme Handling for Campus Assets identity and Dark Mode
+    const getThemeColors = () => {
+        const isDark = document.documentElement.getAttribute('data-bs-theme') === 'dark';
+        return {
+            textColor: isDark ? '#E8F0EA' : '#495057', // Muted text for readability
+            gridColor: isDark ? 'rgba(255, 255, 255, 0.1)' : 'rgba(0, 0, 0, 0.1)',
+            bgColors: [
+                'rgba(26, 54, 38, 0.7)',   // Sidebar forest green
+                'rgba(38, 74, 54, 0.7)',   // Hover green
+                'rgba(60, 107, 81, 0.7)',  // Lighter green
+                'rgba(13, 110, 253, 0.7)', // Bootstrap Blue
+                'rgba(255, 193, 7, 0.7)',  // Bootstrap Yellow
+                'rgba(220, 53, 69, 0.7)',  // Bootstrap Red
+                'rgba(23, 162, 184, 0.7)'  // Bootstrap Cyan
+            ],
+            borderColors: [
+                'rgba(26, 54, 38, 1)',
+                'rgba(38, 74, 54, 1)',
+                'rgba(60, 107, 81, 1)',
+                'rgba(13, 110, 253, 1)',
+                'rgba(255, 193, 7, 1)',
+                'rgba(220, 53, 69, 1)',
+                'rgba(23, 162, 184, 1)'
+            ]
+        };
+    };
+
+    let colors = getThemeColors();
+    Chart.defaults.color = colors.textColor;
+    Chart.defaults.font.family = "'Poppins', sans-serif";
+    
+    const charts = {};
+
+    // Helper to safely render charts or fallback to empty state
+    function renderChart(canvasId, type, labels, data, label, extraOptions={}) {
+        const canvas = document.getElementById(canvasId);
+        const emptyState = document.getElementById(canvasId + 'Empty');
+        
+        // Sum data to check if empty/zero (avoids rendering empty circles/lines)
+        const total = data.reduce((a, b) => a + b, 0);
+        if (labels.length === 0 || total === 0) {
+            canvas.classList.add('d-none');
+            emptyState.classList.remove('d-none');
+            return null;
+        }
+        
+        let config = {
+            type: type,
+            data: {
+                labels: labels,
+                datasets: [{
+                    label: label,
+                    data: data,
+                    backgroundColor: type === 'line' ? 'rgba(26, 54, 38, 0.2)' : colors.bgColors,
+                    borderColor: type === 'line' ? 'rgba(26, 54, 38, 1)' : colors.borderColors,
+                    borderWidth: 1,
+                    fill: type === 'line',
+                    tension: 0.3,
+                    hoverOffset: type === 'doughnut' ? 10 : 0
+                }]
+            },
+            options: {
+                responsive: true,
+                maintainAspectRatio: false,
+                animation: type === 'doughnut' ? {
+                    // Explicitly enable sweeping/drawing effect for Doughnuts
+                    animateRotate: true,
+                    animateScale: false,
+                    duration: 1500,
+                    easing: 'easeOutQuart',
+                    delay: extraOptions.delay || 0
+                } : {
+                    duration: 1500,
+                    easing: 'easeOutQuart',
+                    delay: (context) => {
+                        let delay = extraOptions.delay || 0;
+                        if (context.type === 'data') {
+                            delay += context.index * 100;
+                        }
+                        return delay;
+                    }
+                },
+                interaction: {
+                    mode: 'index',
+                    intersect: false,
+                },
+                elements: {
+                    point: {
+                        radius: type === 'line' ? 3 : 0,
+                        hoverRadius: type === 'line' ? 6 : 0,
+                        borderWidth: 2,
+                        hoverBorderWidth: 3
+                    },
+                    bar: {
+                        hoverBackgroundColor: type === 'bar' ? colors.borderColors : undefined
+                    }
+                },
+                plugins: {
+                    legend: {
+                        position: type === 'doughnut' ? 'right' : 'top',
+                        labels: { color: colors.textColor }
+                    },
+                    tooltip: {
+                        animation: {
+                            duration: 200
+                        }
+                    }
+                }
+            }
+        };
+        
+        if (type === 'bar' || type === 'line') {
+            config.options.scales = {
+                x: { 
+                    ticks: { color: colors.textColor },
+                    grid: { color: colors.gridColor, drawBorder: false }
+                },
+                y: {
+                    beginAtZero: true,
+                    ticks: { color: colors.textColor },
+                    grid: { color: colors.gridColor, drawBorder: false }
+                }
+            };
+        }
+        
+        if (extraOptions.indexAxis === 'y') {
+            config.options.indexAxis = 'y'; // Triggers Horizontal Bar in Chart.js v3+
+        }
+        
+        return new Chart(canvas, config);
+    }
+
+    // Initialize all 5 charts with staggered delays
+    charts.category = renderChart('categoryChart', 'doughnut', catLabels, catCounts, 'Assets', { delay: 0 });
+    charts.status = renderChart('statusChart', 'doughnut', statLabels, statCounts, 'Assets', { delay: 200 });
+    charts.condition = renderChart('conditionChart', 'bar', condLabels, condCounts, 'Assets', { delay: 400 });
+    charts.department = renderChart('departmentChart', 'bar', deptLabels, deptCounts, 'Allocated Units', { indexAxis: 'y', delay: 400 });
+    charts.maintenance = renderChart('maintenanceChart', 'line', maintLabels, maintCosts, 'Cost (₹)', { delay: 700 });
+
+    // Listen for theme changes triggered globally in base.html
+    const observer = new MutationObserver(function(mutations) {
+        mutations.forEach(function(mutation) {
+            if (mutation.attributeName === "data-bs-theme") {
+                colors = getThemeColors();
+                Chart.defaults.color = colors.textColor;
+                
+                Object.values(charts).forEach(chart => {
+                    if(!chart) return;
+                    
+                    chart.options.plugins.legend.labels.color = colors.textColor;
+                    
+                    if (chart.options.scales) {
+                        if(chart.options.scales.x) {
+                            chart.options.scales.x.ticks.color = colors.textColor;
+                            chart.options.scales.x.grid.color = colors.gridColor;
+                        }
+                        if(chart.options.scales.y) {
+                            chart.options.scales.y.ticks.color = colors.textColor;
+                            chart.options.scales.y.grid.color = colors.gridColor;
+                        }
+                    }
+                    chart.update(); // Re-render gracefully without page reload
+                });
+            }
+        });
+    });
+    
+    // Attach listener to HTML tag
+    observer.observe(document.documentElement, { attributes: true });
+});
+</script>
+{% endblock %}

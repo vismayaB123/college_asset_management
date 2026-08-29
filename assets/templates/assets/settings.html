@@ -1,0 +1,220 @@
+{% extends 'base.html' %}
+
+{% block title %}Settings | Campus Assets{% endblock %}
+{% block page_title %}Settings{% endblock %}
+
+{% block content %}
+<div class="d-flex justify-content-between align-items-center mb-4">
+    <div>
+        <h2 class="h4 fw-bold" style="color: var(--sidebar-bg);">
+            <i class="bi bi-gear me-2"></i> Settings
+        </h2>
+        <p class="text-muted mb-0">Manage your account and system preferences.</p>
+    </div>
+</div>
+
+<!-- Django Messages -->
+{% if messages %}
+    {% for message in messages %}
+        <div class="alert alert-{% if message.tags == 'error' %}danger{% else %}{{ message.tags }}{% endif %} alert-dismissible fade show shadow-sm" role="alert">
+            {{ message }}
+            <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Close"></button>
+        </div>
+    {% endfor %}
+{% endif %}
+
+<div class="row g-4">
+    <!-- Account Settings -->
+    <div class="col-md-6">
+        <div class="card border-0 shadow-sm rounded-3 h-100">
+            <div class="card-header bg-white border-bottom-0 pt-4 pb-0 px-4">
+                <h5 class="fw-bold mb-0">Account</h5>
+            </div>
+            <div class="card-body p-4 d-flex flex-column">
+                <div class="d-flex align-items-start mb-4">
+                    <div class="bg-light rounded-circle p-3 me-3 text-secondary" style="font-size: 1.5rem;">
+                        <i class="bi bi-person-circle"></i>
+                    </div>
+                    <div>
+                        <h6 class="fw-bold mb-1">Profile</h6>
+                        <p class="text-muted small mb-0">Update your personal information and profile picture.</p>
+                    </div>
+                </div>
+                <div class="mt-auto pt-3 border-top text-end">
+                    <a href="{% url 'assets:profile' %}" class="btn btn-outline-secondary px-4">
+                        Manage Profile <i class="bi bi-arrow-right ms-1"></i>
+                    </a>
+                </div>
+            </div>
+        </div>
+    </div>
+    
+    <!-- Security Settings -->
+    <div class="col-md-6">
+        <div class="card border-0 shadow-sm rounded-3 h-100">
+            <div class="card-header bg-white border-bottom-0 pt-4 pb-0 px-4">
+                <h5 class="fw-bold mb-0">Security</h5>
+            </div>
+            <div class="card-body p-4 d-flex flex-column">
+                <div class="d-flex align-items-start mb-4">
+                    <div class="bg-light rounded-circle p-3 me-3 text-secondary" style="font-size: 1.5rem;">
+                        <i class="bi bi-shield-lock"></i>
+                    </div>
+                    <div>
+                        <h6 class="fw-bold mb-1">Change Password</h6>
+                        <p class="text-muted small mb-0">Update your account password to keep your account secure.</p>
+                    </div>
+                </div>
+                <div class="mt-auto pt-3 border-top text-end">
+                    <a href="{% url 'assets:change_password' %}" class="btn btn-outline-secondary px-4">
+                        Change Password <i class="bi bi-arrow-right ms-1"></i>
+                    </a>
+                </div>
+            </div>
+        </div>
+    </div>
+    
+    <!-- Notification Preferences -->
+    <div class="col-md-6">
+        <div class="card border-0 shadow-sm rounded-3 h-100">
+            <div class="card-header bg-white border-bottom-0 pt-4 pb-0 px-4">
+                <h5 class="fw-bold mb-0">Notification Preferences</h5>
+            </div>
+            <div class="card-body p-4">
+                <form method="POST" action="{% url 'assets:settings' %}">
+                    {% csrf_token %}
+                    <input type="hidden" name="action" value="update_notifications">
+                    
+                    <div class="form-check form-switch mb-3">
+                        <input class="form-check-input" type="checkbox" role="switch" id="lowStockToggle" name="low_stock_notifications" {% if profile.low_stock_notifications %}checked{% endif %}>
+                        <label class="form-check-label ms-2 fw-medium" for="lowStockToggle">Low Stock Alerts</label>
+                        <div class="small text-muted">Notify me when asset availability is running low.</div>
+                    </div>
+                    
+                    <div class="form-check form-switch mb-3">
+                        <input class="form-check-input" type="checkbox" role="switch" id="overdueToggle" name="overdue_allocation_notifications" {% if profile.overdue_allocation_notifications %}checked{% endif %}>
+                        <label class="form-check-label ms-2 fw-medium" for="overdueToggle">Overdue Allocations</label>
+                        <div class="small text-muted">Notify me when an asset has not been returned on time.</div>
+                    </div>
+                    
+                    <div class="form-check form-switch mb-4">
+                        <input class="form-check-input" type="checkbox" role="switch" id="maintenanceToggle" name="maintenance_notifications" {% if profile.maintenance_notifications %}checked{% endif %}>
+                        <label class="form-check-label ms-2 fw-medium" for="maintenanceToggle">Active Maintenance</label>
+                        <div class="small text-muted">Notify me about assets currently undergoing maintenance.</div>
+                    </div>
+                    
+                    <div class="pt-3 border-top text-end">
+                        <button type="submit" class="btn btn-success px-4" style="background-color: var(--sidebar-bg); border-color: var(--sidebar-bg);">Save Preferences</button>
+                    </div>
+                </form>
+            </div>
+        </div>
+    </div>
+    
+    <!-- Appearance Settings -->
+    <div class="col-md-6">
+        <div class="card border-0 shadow-sm rounded-3 h-100">
+            <div class="card-header bg-white border-bottom-0 pt-4 pb-0 px-4">
+                <h5 class="fw-bold mb-0">Appearance</h5>
+            </div>
+            <div class="card-body p-4 d-flex flex-column">
+                <p class="text-muted small mb-4">Customize the interface theme across the application.</p>
+                
+                <div class="d-grid gap-2">
+                    <button type="button" class="btn btn-outline-secondary text-start p-3 d-flex align-items-center justify-content-between" onclick="setTheme('light')" id="btn-theme-light">
+                        <span><i class="bi bi-sun me-3"></i>Light Mode</span>
+                        <i class="bi bi-check-circle-fill text-success d-none theme-check"></i>
+                    </button>
+                    <button type="button" class="btn btn-outline-secondary text-start p-3 d-flex align-items-center justify-content-between" onclick="setTheme('dark')" id="btn-theme-dark">
+                        <span><i class="bi bi-moon-stars me-3"></i>Dark Mode</span>
+                        <i class="bi bi-check-circle-fill text-success d-none theme-check"></i>
+                    </button>
+                    <button type="button" class="btn btn-outline-secondary text-start p-3 d-flex align-items-center justify-content-between" onclick="setTheme('system')" id="btn-theme-system">
+                        <span><i class="bi bi-display me-3"></i>System Default</span>
+                        <i class="bi bi-check-circle-fill text-success d-none theme-check"></i>
+                    </button>
+                </div>
+            </div>
+        </div>
+    </div>
+    
+    <!-- System Preferences (Admin Only) -->
+    <div class="col-12">
+        <div class="card border-0 shadow-sm rounded-3">
+            <div class="card-header bg-white border-bottom-0 pt-4 pb-0 px-4">
+                <h5 class="fw-bold mb-0"><i class="bi bi-cpu me-2"></i> System Preferences</h5>
+            </div>
+            <div class="card-body p-4">
+                {% if request.user.is_staff or request.user.is_superuser %}
+                    <form method="POST" action="{% url 'assets:settings' %}">
+                        {% csrf_token %}
+                        <input type="hidden" name="action" value="update_system">
+                        
+                        <div class="row align-items-end">
+                            <div class="col-md-6 mb-3 mb-md-0">
+                                <label for="lowStockThreshold" class="form-label fw-medium">Global Low Stock Threshold</label>
+                                <input type="number" class="form-control" id="lowStockThreshold" name="low_stock_threshold" value="{{ sys_settings.low_stock_threshold }}" min="0" required>
+                                <div class="form-text small text-muted">Triggers a notification for all users when an asset's available quantity falls to or below this number.</div>
+                            </div>
+                            <div class="col-md-6 text-md-end text-start">
+                                <button type="submit" class="btn btn-outline-success px-4">Update System</button>
+                            </div>
+                        </div>
+                    </form>
+                {% else %}
+                    <div class="row">
+                        <div class="col-12">
+                            <label class="form-label fw-medium text-muted">Global Low Stock Threshold</label>
+                            <div class="fs-5 fw-bold">{{ sys_settings.low_stock_threshold }}</div>
+                            <div class="form-text small text-muted">Triggers a notification when an asset's available quantity falls to or below this number. (Contact an administrator to modify).</div>
+                        </div>
+                    </div>
+                {% endif %}
+            </div>
+        </div>
+    </div>
+</div>
+
+<script>
+    function updateThemeUI(theme) {
+        // Reset all buttons
+        document.querySelectorAll('.theme-check').forEach(el => el.classList.add('d-none'));
+        document.querySelectorAll('[id^="btn-theme-"]').forEach(el => {
+            el.classList.remove('btn-secondary');
+            el.classList.add('btn-outline-secondary');
+        });
+        
+        // Highlight active
+        const activeBtn = document.getElementById(`btn-theme-${theme}`);
+        if(activeBtn) {
+            activeBtn.querySelector('.theme-check').classList.remove('d-none');
+            activeBtn.classList.remove('btn-outline-secondary');
+            activeBtn.classList.add('btn-secondary');
+        }
+    }
+
+    function setTheme(theme) {
+        localStorage.setItem('theme', theme);
+        
+        if (theme === 'dark' || (theme === 'system' && window.matchMedia('(prefers-color-scheme: dark)').matches)) {
+            document.documentElement.setAttribute('data-bs-theme', 'dark');
+        } else {
+            document.documentElement.setAttribute('data-bs-theme', 'light');
+        }
+        
+        updateThemeUI(theme);
+    }
+
+    document.addEventListener('DOMContentLoaded', () => {
+        const savedTheme = localStorage.getItem('theme') || 'system';
+        updateThemeUI(savedTheme);
+        
+        // Listen for system theme changes if set to system
+        window.matchMedia('(prefers-color-scheme: dark)').addEventListener('change', () => {
+            if (localStorage.getItem('theme') === 'system') {
+                setTheme('system');
+            }
+        });
+    });
+</script>
+{% endblock %}

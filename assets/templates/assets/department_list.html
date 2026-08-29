@@ -1,0 +1,223 @@
+{% extends 'base.html' %}
+
+{% block title %}Departments | Campus Assets{% endblock %}
+{% block page_title %}Departments{% endblock %}
+
+{% block content %}
+<div class="d-flex justify-content-between align-items-center mb-4">
+    <div>
+        <h2 class="h4 fw-bold" style="color: var(--sidebar-bg);">College Departments</h2>
+        <p class="text-muted mb-0">Manage departments responsible for college assets and equipment.</p>
+    </div>
+    <button class="btn btn-success d-flex align-items-center gap-2 px-3 py-2" data-bs-toggle="modal" data-bs-target="#addDepartmentModal" style="background-color: var(--sidebar-bg); border-color: var(--sidebar-bg);">
+        <i class="bi bi-plus-lg"></i> Add Department
+    </button>
+</div>
+
+<!-- Django Messages -->
+{% if messages %}
+    {% for message in messages %}
+        <div class="alert alert-{% if message.tags == 'error' %}danger{% else %}{{ message.tags }}{% endif %} alert-dismissible fade show shadow-sm" role="alert">
+            {{ message }}
+            <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Close"></button>
+        </div>
+    {% endfor %}
+{% endif %}
+
+<!-- Main Card -->
+<div class="card border-0 shadow-sm rounded-3">
+    <div class="card-header bg-white border-bottom-0 pt-4 pb-0 px-4">
+        <div class="row">
+            <div class="col-md-4 col-sm-6">
+                <div class="input-group">
+                    <span class="input-group-text bg-light border-end-0"><i class="bi bi-search text-muted"></i></span>
+                    <input type="text" id="searchInput" class="form-control bg-light border-start-0 ps-0" placeholder="Search departments...">
+                </div>
+            </div>
+        </div>
+    </div>
+    <div class="card-body px-4 pb-4 pt-3">
+        {% if departments %}
+            <div class="table-responsive">
+                <table class="table table-hover align-middle mb-0" id="departmentsTable">
+                    <thead class="text-muted small">
+                        <tr>
+                            <th class="ps-0 border-top-0">Department Name</th>
+                            <th class="border-top-0">Code</th>
+                            <th class="border-top-0">Location</th>
+                            <th class="border-top-0 text-center">Allocations</th>
+                            <th class="border-top-0 text-end pe-0">Actions</th>
+                        </tr>
+                    </thead>
+                    <tbody class="border-top-0">
+                        {% for department in departments %}
+                        <tr class="department-row">
+                            <td class="ps-0">
+                                <div class="fw-medium text-dark department-name">{{ department.name }}</div>
+                            </td>
+                            <td>
+                                <span class="badge bg-secondary-subtle text-secondary border border-secondary-subtle px-2 py-1 department-code">{{ department.code }}</span>
+                            </td>
+                            <td>
+                                <span class="text-muted small department-location">
+                                    {{ department.location|default:"Not specified" }}
+                                </span>
+                            </td>
+                            <td class="text-center">
+                                <span class="badge bg-light text-dark border rounded-pill px-3">{{ department.allocation_count }}</span>
+                            </td>
+                            <td class="text-end pe-0">
+                                <button class="btn btn-sm btn-light text-primary me-1" data-bs-toggle="modal" data-bs-target="#editDepartmentModal{{ department.pk }}" title="Edit">
+                                    <i class="bi bi-pencil-square"></i>
+                                </button>
+                                <button class="btn btn-sm btn-light text-danger" data-bs-toggle="modal" data-bs-target="#deleteDepartmentModal{{ department.pk }}" title="Delete">
+                                    <i class="bi bi-trash3"></i>
+                                </button>
+                            </td>
+                        </tr>
+
+                        <!-- Edit Department Modal -->
+                        <div class="modal fade" id="editDepartmentModal{{ department.pk }}" tabindex="-1" aria-labelledby="editDepartmentModalLabel{{ department.pk }}" aria-hidden="true">
+                            <div class="modal-dialog modal-dialog-centered">
+                                <div class="modal-content border-0 shadow">
+                                    <div class="modal-header border-bottom-0 pb-0">
+                                        <h5 class="modal-title fw-bold" id="editDepartmentModalLabel{{ department.pk }}" style="color: var(--sidebar-bg);">Edit Department</h5>
+                                        <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+                                    </div>
+                                    <form action="{% url 'assets:department_edit' department.pk %}" method="POST">
+                                        {% csrf_token %}
+                                        <div class="modal-body text-start">
+                                            <div class="mb-3">
+                                                <label class="form-label fw-medium small">Department Name <span class="text-danger">*</span></label>
+                                                <input type="text" name="name" class="form-control bg-light" value="{{ department.name }}" required maxlength="150">
+                                            </div>
+                                            <div class="mb-3">
+                                                <label class="form-label fw-medium small">Department Code <span class="text-danger">*</span></label>
+                                                <input type="text" name="code" class="form-control bg-light" value="{{ department.code }}" required maxlength="20">
+                                            </div>
+                                            <div class="mb-3">
+                                                <label class="form-label fw-medium small">Location</label>
+                                                <input type="text" name="location" class="form-control bg-light" value="{{ department.location }}" maxlength="150">
+                                            </div>
+                                        </div>
+                                        <div class="modal-footer border-top-0 pt-0">
+                                            <button type="button" class="btn btn-light" data-bs-dismiss="modal">Cancel</button>
+                                            <button type="submit" class="btn btn-success px-4" style="background-color: var(--sidebar-bg); border-color: var(--sidebar-bg);">Save Changes</button>
+                                        </div>
+                                    </form>
+                                </div>
+                            </div>
+                        </div>
+
+                        <!-- Delete Department Modal -->
+                        <div class="modal fade" id="deleteDepartmentModal{{ department.pk }}" tabindex="-1" aria-labelledby="deleteDepartmentModalLabel{{ department.pk }}" aria-hidden="true">
+                            <div class="modal-dialog modal-dialog-centered">
+                                <div class="modal-content border-0 shadow">
+                                    <div class="modal-header border-bottom-0 pb-0">
+                                        <h5 class="modal-title fw-bold text-danger" id="deleteDepartmentModalLabel{{ department.pk }}">Delete Department</h5>
+                                        <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+                                    </div>
+                                    <form action="{% url 'assets:department_delete' department.pk %}" method="POST">
+                                        {% csrf_token %}
+                                        <div class="modal-body text-start">
+                                            <p class="mb-0">Are you sure you want to delete the department <strong>"{{ department.name }}"</strong>?</p>
+                                            {% if department.allocation_count > 0 %}
+                                            <div class="alert alert-warning mt-3 mb-0 d-flex gap-2">
+                                                <i class="bi bi-exclamation-triangle-fill mt-1"></i>
+                                                <small>This department has {{ department.allocation_count }} active allocation(s) and cannot be deleted until they are reassigned or removed.</small>
+                                            </div>
+                                            {% else %}
+                                            <div class="text-muted small mt-2">This action cannot be undone.</div>
+                                            {% endif %}
+                                        </div>
+                                        <div class="modal-footer border-top-0 pt-0">
+                                            <button type="button" class="btn btn-light" data-bs-dismiss="modal">Cancel</button>
+                                            <button type="submit" class="btn btn-danger px-4" {% if department.allocation_count > 0 %}disabled{% endif %}>Delete</button>
+                                        </div>
+                                    </form>
+                                </div>
+                            </div>
+                        </div>
+
+                        {% endfor %}
+                    </tbody>
+                </table>
+            </div>
+        {% else %}
+            <!-- Empty State -->
+            <div class="text-center py-5">
+                <i class="bi bi-building display-1 text-muted mb-4 d-block opacity-50"></i>
+                <h5 class="fw-medium text-dark mb-2">No departments have been added yet.</h5>
+                <p class="text-muted mb-4">Get started by creating your first department.</p>
+                <button class="btn btn-success px-4 py-2" data-bs-toggle="modal" data-bs-target="#addDepartmentModal" style="background-color: var(--sidebar-bg); border-color: var(--sidebar-bg);">
+                    <i class="bi bi-plus-lg me-2"></i> Add Your First Department
+                </button>
+            </div>
+        {% endif %}
+    </div>
+</div>
+
+<!-- Add Department Modal -->
+<div class="modal fade" id="addDepartmentModal" tabindex="-1" aria-labelledby="addDepartmentModalLabel" aria-hidden="true">
+    <div class="modal-dialog modal-dialog-centered">
+        <div class="modal-content border-0 shadow">
+            <div class="modal-header border-bottom-0 pb-0">
+                <h5 class="modal-title fw-bold" id="addDepartmentModalLabel" style="color: var(--sidebar-bg);">Add New Department</h5>
+                <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+            </div>
+            <form action="{% url 'assets:department_add' %}" method="POST">
+                {% csrf_token %}
+                <div class="modal-body text-start">
+                    <div class="mb-3">
+                        <label class="form-label fw-medium small">Department Name <span class="text-danger">*</span></label>
+                        <input type="text" name="name" class="form-control bg-light" placeholder="e.g. Computer Science" required maxlength="150">
+                    </div>
+                    <div class="mb-3">
+                        <label class="form-label fw-medium small">Department Code <span class="text-danger">*</span></label>
+                        <input type="text" name="code" class="form-control bg-light" placeholder="e.g. CS" required maxlength="20">
+                    </div>
+                    <div class="mb-3">
+                        <label class="form-label fw-medium small">Location</label>
+                        <input type="text" name="location" class="form-control bg-light" placeholder="e.g. Building A, Room 101" maxlength="150">
+                    </div>
+                </div>
+                <div class="modal-footer border-top-0 pt-0">
+                    <button type="button" class="btn btn-light" data-bs-dismiss="modal">Cancel</button>
+                    <button type="submit" class="btn btn-success px-4" style="background-color: var(--sidebar-bg); border-color: var(--sidebar-bg);">Save Department</button>
+                </div>
+            </form>
+        </div>
+    </div>
+</div>
+
+<!-- Search Filtering Script -->
+<script>
+    document.addEventListener('DOMContentLoaded', function() {
+        const searchInput = document.getElementById('searchInput');
+        if (searchInput) {
+            searchInput.addEventListener('keyup', function() {
+                const query = this.value.toLowerCase();
+                const rows = document.querySelectorAll('.department-row');
+                
+                rows.forEach(row => {
+                    const nameCell = row.querySelector('.department-name');
+                    const codeCell = row.querySelector('.department-code');
+                    const locCell = row.querySelector('.department-location');
+                    
+                    if (nameCell || codeCell || locCell) {
+                        const name = nameCell ? nameCell.textContent.toLowerCase() : '';
+                        const code = codeCell ? codeCell.textContent.toLowerCase() : '';
+                        const loc = locCell ? locCell.textContent.toLowerCase() : '';
+                        
+                        if (name.includes(query) || code.includes(query) || loc.includes(query)) {
+                            row.style.display = '';
+                        } else {
+                            row.style.display = 'none';
+                        }
+                    }
+                });
+            });
+        }
+    });
+</script>
+{% endblock %}
