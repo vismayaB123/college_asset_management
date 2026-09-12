@@ -1,9 +1,11 @@
 from django.shortcuts import render, redirect, get_object_or_404
 from django.contrib.auth.decorators import login_required
+from django.contrib.auth.models import User
+from .decorators import system_admin_required, technician_required, normal_user_required
 from django.contrib.auth import update_session_auth_hash
 from django.contrib.auth.forms import PasswordChangeForm
-from django.db.models import Count, ProtectedError, Sum, F, ExpressionWrapper, DecimalField
-from django.db.models.functions import Coalesce
+from django.db.models import Count, ProtectedError, Sum, F, ExpressionWrapper, DecimalField, Q, Avg
+from django.db.models.functions import Coalesce, TruncMonth
 from django.db import transaction
 from django.utils import timezone
 from django.contrib import messages
@@ -18,53 +20,96 @@ from reportlab.platypus import SimpleDocTemplate, Table, TableStyle, Paragraph, 
 from reportlab.lib.styles import getSampleStyleSheet
 from reportlab.lib import colors
 
-from .forms import SystemAdminRegistrationForm
-from .models import Asset, Allocation, Maintenance, Category, Department, Profile, SystemSettings
+from .forms import UserRegistrationForm
+from .models import Asset, Allocation, Maintenance, Category, Department, Profile, SystemSettings, DamagedEquipment, UserRequest, UserFeedback
 
 @login_required
 def dashboard(request):
+    role = getattr(request.user, 'profile', None) and request.user.profile.role
+    
+    if role == 'NORMAL_USER':
+        # NORMAL_USER Statistics
+        my_equipment_count = request.user.allocations.filter(status__in=['Active', 'Partially Returned']).count()
+        active_requests_count = UserRequest.objects.filter(user=request.user, status__in=['PENDING', 'ASSIGNED', 'IN_PROGRESS']).count()
+        resolved_requests_count = UserRequest.objects.filter(user=request.user, status='RESOLVED').count()
+        open_issues_count = DamagedEquipment.objects.filter(reported_by=request.user, status__in=['REPORTED', 'UNDER_REVIEW', 'UNDER_REPAIR']).count()
+        
+        context = {
+            'my_equipment_count': my_equipment_count,
+            'active_requests_count': active_requests_count,
+            'resolved_requests_count': resolved_requests_count,
+            'open_issues_count': open_issues_count
+        }
+        return render(request, 'assets/user_dashboard.html', context)
+        
+    elif role == 'TECHNICIAN':
+        recent_maintenance = Maintenance.objects.select_related('asset').order_by('-maintenance_date', '-id')[:5]
+        maintenance_assets = Asset.objects.filter(status='Under Maintenance').aggregate(m=Sum('quantity'))['m'] or 0
+        total_assets = Asset.objects.aggregate(total=Sum('quantity'))['total'] or 0
+        context = {
+            'recent_maintenance': recent_maintenance,
+            'maintenance_assets': maintenance_assets,
+            'total_assets': total_assets,
+            'damaged_count': DamagedEquipment.objects.filter(status__in=['REPORTED', 'UNDER_REVIEW', 'UNDER_REPAIR']).count(),
+            'pending_requests': UserRequest.objects.filter(status='PENDING').count(),
+            'in_progress_requests': UserRequest.objects.filter(status__in=['ASSIGNED', 'IN_PROGRESS']).count()
+        }
+        return render(request, 'assets/technician_dashboard.html', context)
+
     total_assets = Asset.objects.count()
-    available_assets = Asset.objects.filter(status='Available').count()
-    allocated_assets = Asset.objects.filter(status__in=['Partially Allocated', 'Fully Allocated']).count()
+    total_asset_quantity = Asset.objects.aggregate(total=Sum('quantity'))['total'] or 0
+    available_quantity = Asset.objects.aggregate(avail=Sum('available_quantity'))['avail'] or 0
+    allocated_quantity = total_asset_quantity - available_quantity
     maintenance_assets = Asset.objects.filter(status='Under Maintenance').count()
+    damaged_equipment = DamagedEquipment.objects.filter(status__in=['REPORTED', 'UNDER_REVIEW', 'UNDER_REPAIR']).count()
+
+    active_allocations = Allocation.objects.filter(status__in=['Active', 'Partially Returned']).count()
+    pending_returns = Allocation.objects.filter(status__in=['Active', 'Partially Returned'], expected_return_date__isnull=False).count()
+    pending_requests = UserRequest.objects.filter(status='PENDING').count()
+    resolved_requests = UserRequest.objects.filter(status='RESOLVED').count()
+    
+    total_users = User.objects.filter(profile__role='NORMAL_USER').count()
+    total_technicians = User.objects.filter(profile__role='TECHNICIAN').count()
 
     recent_allocations = Allocation.objects.select_related('asset', 'department').order_by('-allocation_date', '-id')[:5]
+    recent_support_requests = UserRequest.objects.select_related('user', 'asset', 'assigned_technician').order_by('-created_at')[:5]
+    recent_damage_reports = DamagedEquipment.objects.select_related('reported_by', 'asset', 'assigned_technician').order_by('-created_at')[:5]
     recent_maintenance = Maintenance.objects.select_related('asset').order_by('-maintenance_date', '-id')[:5]
-    categories = Category.objects.annotate(asset_count=Count('asset'))
-
-    conditions_data = []
-    total = total_assets if total_assets > 0 else 1
-    for code, name in Asset.CONDITION_CHOICES:
-        count = Asset.objects.filter(condition=code).count()
-        percentage = (count / total) * 100
-        conditions_data.append({
-            'name': name,
-            'count': count,
-            'percentage': percentage,
-            'color': 'success' if code == 'Good' else 'warning' if code == 'Fair' else 'danger' if code == 'Damaged' else 'secondary'
-        })
-
+    
     context = {
         'total_assets': total_assets,
-        'available_assets': available_assets,
-        'allocated_assets': allocated_assets,
+        'total_asset_quantity': total_asset_quantity,
+        'available_quantity': available_quantity,
+        'allocated_quantity': allocated_quantity,
         'maintenance_assets': maintenance_assets,
+        'damaged_equipment': damaged_equipment,
+        
+        'active_allocations': active_allocations,
+        'pending_returns': pending_returns,
+        'pending_requests': pending_requests,
+        'open_damage_reports': damaged_equipment, # Same as damaged_equipment
+        'resolved_requests': resolved_requests,
+        
+        'total_users': total_users,
+        'total_technicians': total_technicians,
+        
         'recent_allocations': recent_allocations,
+        'recent_support_requests': recent_support_requests,
+        'recent_damage_reports': recent_damage_reports,
         'recent_maintenance': recent_maintenance,
-        'categories': categories,
-        'conditions_data': conditions_data,
     }
     return render(request, 'assets/dashboard.html', context)
 
 @login_required
+@technician_required
 def asset_list(request):
     assets = Asset.objects.select_related('category').order_by('-created_at')
     categories = Category.objects.all().order_by('name')
     
-    total_assets = assets.count()
-    available = assets.filter(status='Available').count()
-    allocated = assets.filter(status__in=['Partially Allocated', 'Fully Allocated']).count()
-    under_maintenance = assets.filter(status='Under Maintenance').count()
+    total_assets = assets.aggregate(total=Sum('quantity'))['total'] or 0
+    available = assets.aggregate(avail=Sum('available_quantity'))['avail'] or 0
+    allocated = total_assets - available
+    under_maintenance = assets.filter(status='Under Maintenance').aggregate(m=Sum('quantity'))['m'] or 0
     
     context = {
         'assets': assets,
@@ -72,6 +117,9 @@ def asset_list(request):
         'condition_choices': Asset.CONDITION_CHOICES,
         'status_choices': Asset.STATUS_CHOICES,
         'total_assets': total_assets,
+            'damaged_count': DamagedEquipment.objects.filter(status__in=['REPORTED', 'UNDER_REVIEW', 'UNDER_REPAIR']).count(),
+            'pending_requests': UserRequest.objects.filter(status='PENDING').count(),
+            'in_progress_requests': UserRequest.objects.filter(status__in=['ASSIGNED', 'IN_PROGRESS']).count(),
         'available_count': available,
         'allocated_count': allocated,
         'maintenance_count': under_maintenance,
@@ -79,6 +127,7 @@ def asset_list(request):
     return render(request, 'assets/asset_list.html', context)
 
 @login_required
+@system_admin_required
 def asset_add(request):
     if request.method == 'POST':
         asset_code = request.POST.get('asset_code')
@@ -115,6 +164,7 @@ def asset_add(request):
     return redirect('assets:asset_list')
 
 @login_required
+@system_admin_required
 def asset_edit(request, pk):
     if request.method == 'POST':
         with transaction.atomic():
@@ -162,6 +212,7 @@ def asset_edit(request, pk):
     return redirect('assets:asset_list')
 
 @login_required
+@system_admin_required
 def asset_delete(request, pk):
     if request.method == 'POST':
         asset = get_object_or_404(Asset, pk=pk)
@@ -174,11 +225,13 @@ def asset_delete(request, pk):
     return redirect('assets:asset_list')
 
 @login_required
+@system_admin_required
 def category_list(request):
     categories = Category.objects.annotate(asset_count=Count('asset')).order_by('-created_at')
     return render(request, 'assets/category_list.html', {'categories': categories})
 
 @login_required
+@system_admin_required
 def category_add(request):
     if request.method == 'POST':
         name = request.POST.get('name')
@@ -192,6 +245,7 @@ def category_add(request):
     return redirect('assets:category_list')
 
 @login_required
+@system_admin_required
 def category_edit(request, pk):
     if request.method == 'POST':
         category = get_object_or_404(Category, pk=pk)
@@ -208,6 +262,7 @@ def category_edit(request, pk):
     return redirect('assets:category_list')
 
 @login_required
+@system_admin_required
 def category_delete(request, pk):
     if request.method == 'POST':
         category = get_object_or_404(Category, pk=pk)
@@ -220,11 +275,13 @@ def category_delete(request, pk):
     return redirect('assets:category_list')
 
 @login_required
+@system_admin_required
 def department_list(request):
     departments = Department.objects.annotate(allocation_count=Count('allocation')).order_by('-created_at')
     return render(request, 'assets/department_list.html', {'departments': departments})
 
 @login_required
+@system_admin_required
 def department_add(request):
     if request.method == 'POST':
         name = request.POST.get('name')
@@ -241,6 +298,7 @@ def department_add(request):
     return redirect('assets:department_list')
 
 @login_required
+@system_admin_required
 def department_edit(request, pk):
     if request.method == 'POST':
         department = get_object_or_404(Department, pk=pk)
@@ -261,6 +319,7 @@ def department_edit(request, pk):
     return redirect('assets:department_list')
 
 @login_required
+@system_admin_required
 def department_delete(request, pk):
     if request.method == 'POST':
         department = get_object_or_404(Department, pk=pk)
@@ -273,10 +332,12 @@ def department_delete(request, pk):
     return redirect('assets:department_list')
 
 @login_required
+@technician_required
 def allocation_list(request):
-    allocations = Allocation.objects.select_related('asset', 'department').order_by('-allocation_date', '-id')
+    allocations = Allocation.objects.select_related('asset', 'department', 'assigned_user').order_by('-allocation_date', '-id')
     assets = Asset.objects.filter(available_quantity__gt=0).order_by('name')
     departments = Department.objects.all().order_by('name')
+    users = User.objects.filter(is_active=True).order_by('first_name')
     
     total_allocations = allocations.count()
     active_allocations = allocations.filter(status='Active').count()
@@ -286,6 +347,7 @@ def allocation_list(request):
         'allocations': allocations,
         'assets': assets,
         'departments': departments,
+        'users': users,
         'status_choices': Allocation.STATUS_CHOICES,
         'total_allocations': total_allocations,
         'active_allocations': active_allocations,
@@ -294,11 +356,15 @@ def allocation_list(request):
     return render(request, 'assets/allocation_list.html', context)
 
 @login_required
+@system_admin_required
 def allocation_add(request):
     if request.method == 'POST':
         asset_id = request.POST.get('asset_id')
         department_id = request.POST.get('department_id')
         assigned_to = request.POST.get('assigned_to', '')
+        assigned_user_id = request.POST.get('assigned_user_id', '')
+        assigned_user = User.objects.get(pk=assigned_user_id) if assigned_user_id else None
+        allocation_type = request.POST.get('allocation_type', 'PERMANENT')
         quantity = int(request.POST.get('quantity', 0))
         allocation_date = request.POST.get('allocation_date')
         expected_return_date = request.POST.get('expected_return_date') or None
@@ -319,6 +385,8 @@ def allocation_add(request):
                     asset=asset,
                     department=department,
                     assigned_to=assigned_to,
+                    assigned_user=assigned_user,
+                    allocation_type=allocation_type,
                     quantity=quantity,
                     allocation_date=allocation_date,
                     expected_return_date=expected_return_date,
@@ -337,6 +405,7 @@ def allocation_add(request):
     return redirect('assets:allocation_list')
 
 @login_required
+@system_admin_required
 def allocation_edit(request, pk):
     if request.method == 'POST':
         with transaction.atomic():
@@ -345,6 +414,9 @@ def allocation_edit(request, pk):
             
             department_id = request.POST.get('department_id')
             assigned_to = request.POST.get('assigned_to', '')
+            assigned_user_id = request.POST.get('assigned_user_id', '')
+            assigned_user = User.objects.get(pk=assigned_user_id) if assigned_user_id else None
+            allocation_type = request.POST.get('allocation_type', allocation.allocation_type)
             new_quantity = int(request.POST.get('quantity', 0))
             allocation_date = request.POST.get('allocation_date')
             expected_return_date = request.POST.get('expected_return_date') or None
@@ -353,8 +425,12 @@ def allocation_edit(request, pk):
             if new_quantity <= 0:
                 messages.error(request, "Quantity must be greater than zero.")
                 return redirect('assets:allocation_list')
+                
+            if new_quantity < allocation.returned_quantity:
+                messages.error(request, f"Cannot decrease quantity below already returned quantity ({allocation.returned_quantity}).")
+                return redirect('assets:allocation_list')
             
-            if allocation.status == 'Active':
+            if allocation.status in ['Active', 'Partially Returned']:
                 qty_difference = new_quantity - allocation.quantity
                 
                 if qty_difference > asset.available_quantity:
@@ -379,28 +455,48 @@ def allocation_edit(request, pk):
             
             allocation.department_id = department_id
             allocation.assigned_to = assigned_to
+            allocation.allocation_type = allocation_type
             allocation.quantity = new_quantity
             allocation.allocation_date = allocation_date
             allocation.expected_return_date = expected_return_date
             allocation.purpose = purpose
+            
+            if allocation.returned_quantity == allocation.quantity:
+                allocation.status = 'Returned'
+            elif allocation.returned_quantity > 0:
+                allocation.status = 'Partially Returned'
+            else:
+                allocation.status = 'Active'
+                
             allocation.save()
             
             messages.success(request, f"Allocation updated successfully.")
     return redirect('assets:allocation_list')
 
 @login_required
+@system_admin_required
 def allocation_return(request, pk):
     if request.method == 'POST':
         with transaction.atomic():
             allocation = get_object_or_404(Allocation.objects.select_for_update(), pk=pk)
-            if allocation.status != 'Active':
-                messages.error(request, "This allocation is already returned.")
+            if allocation.status == 'Returned':
+                messages.error(request, "This allocation is already fully returned.")
                 return redirect('assets:allocation_list')
                 
             actual_return_date = request.POST.get('actual_return_date') or timezone.now().date()
+            active_qty = allocation.quantity - allocation.returned_quantity
+            return_quantity = int(request.POST.get('return_quantity', active_qty))
+            
+            if return_quantity <= 0:
+                messages.error(request, "Return quantity must be greater than zero.")
+                return redirect('assets:allocation_list')
+            
+            if return_quantity > active_qty:
+                messages.error(request, f"Cannot return {return_quantity}. Only {active_qty} are currently active.")
+                return redirect('assets:allocation_list')
             
             asset = get_object_or_404(Asset.objects.select_for_update(), pk=allocation.asset_id)
-            asset.available_quantity += allocation.quantity
+            asset.available_quantity += return_quantity
             if asset.available_quantity > asset.quantity:
                 asset.available_quantity = asset.quantity
                 
@@ -410,22 +506,30 @@ def allocation_return(request, pk):
                 asset.status = 'Partially Allocated'
             asset.save()
             
-            allocation.status = 'Returned'
+            allocation.returned_quantity += return_quantity
             allocation.actual_return_date = actual_return_date
+            
+            if allocation.returned_quantity == allocation.quantity:
+                allocation.status = 'Returned'
+            else:
+                allocation.status = 'Partially Returned'
+                
             allocation.save()
             
-            messages.success(request, f"Allocation marked as returned.")
+            messages.success(request, f"Successfully returned {return_quantity} units.")
     return redirect('assets:allocation_list')
 
 @login_required
+@system_admin_required
 def allocation_delete(request, pk):
     if request.method == 'POST':
         with transaction.atomic():
             allocation = get_object_or_404(Allocation.objects.select_for_update(), pk=pk)
             
-            if allocation.status == 'Active':
+            if allocation.status != 'Returned':
                 asset = get_object_or_404(Asset.objects.select_for_update(), pk=allocation.asset_id)
-                asset.available_quantity += allocation.quantity
+                active_qty = allocation.quantity - allocation.returned_quantity
+                asset.available_quantity += active_qty
                 if asset.available_quantity > asset.quantity:
                     asset.available_quantity = asset.quantity
                     
@@ -457,6 +561,7 @@ def update_asset_status_for_maintenance(asset):
     asset.save()
 
 @login_required
+@technician_required
 def maintenance_list(request):
     maintenances = Maintenance.objects.select_related('asset').order_by('-maintenance_date', '-id')
     assets = Asset.objects.all().order_by('name')
@@ -478,6 +583,7 @@ def maintenance_list(request):
     return render(request, 'assets/maintenance_list.html', context)
 
 @login_required
+@system_admin_required
 def maintenance_add(request):
     if request.method == 'POST':
         asset_id = request.POST.get('asset_id')
@@ -505,6 +611,7 @@ def maintenance_add(request):
     return redirect('assets:maintenance_list')
 
 @login_required
+@system_admin_required
 def maintenance_edit(request, pk):
     if request.method == 'POST':
         with transaction.atomic():
@@ -530,6 +637,7 @@ def maintenance_edit(request, pk):
     return redirect('assets:maintenance_list')
 
 @login_required
+@system_admin_required
 def maintenance_delete(request, pk):
     if request.method == 'POST':
         with transaction.atomic():
@@ -567,6 +675,7 @@ def profile(request):
     return render(request, 'assets/profile.html', {'profile': profile_obj})
 
 @login_required
+@system_admin_required
 def settings_view(request):
     profile_obj, _ = Profile.objects.get_or_create(user=request.user)
     sys_settings, _ = SystemSettings.objects.get_or_create(id=1)
@@ -653,6 +762,7 @@ def get_filtered_maintenance(request):
 
 
 @login_required
+@system_admin_required
 def reports(request):
     # 1. Asset Metrics
     total_assets = Asset.objects.count()
@@ -716,6 +826,9 @@ def reports(request):
     
     context = {
         'total_assets': total_assets,
+            'damaged_count': DamagedEquipment.objects.filter(status__in=['REPORTED', 'UNDER_REVIEW', 'UNDER_REPAIR']).count(),
+            'pending_requests': UserRequest.objects.filter(status='PENDING').count(),
+            'in_progress_requests': UserRequest.objects.filter(status__in=['ASSIGNED', 'IN_PROGRESS']).count(),
         'total_asset_value': total_asset_value,
         'total_quantity': total_quantity,
         'available_quantity': available_quantity,
@@ -760,6 +873,7 @@ def reports(request):
         
         # Filter options
         'categories': Category.objects.all(),
+        'users': User.objects.filter(is_active=True).exclude(username='admin'),
         'departments': Department.objects.all(),
         'asset_status_choices': Asset.STATUS_CHOICES,
         'allocation_status_choices': Allocation.STATUS_CHOICES,
@@ -789,6 +903,7 @@ def change_password(request):
 # ==============================================================================
 
 @login_required
+@system_admin_required
 def export_assets_csv(request):
     response = HttpResponse(content_type='text/csv')
     response['Content-Disposition'] = f'attachment; filename="asset_inventory_report_{datetime.now().strftime("%Y%m%d")}.csv"'
@@ -805,6 +920,7 @@ def export_assets_csv(request):
     return response
 
 @login_required
+@system_admin_required
 def export_assets_excel(request):
     wb = openpyxl.Workbook()
     ws = wb.active
@@ -842,6 +958,7 @@ def export_assets_excel(request):
     return response
 
 @login_required
+@system_admin_required
 def export_assets_pdf(request):
     response = HttpResponse(content_type='application/pdf')
     response['Content-Disposition'] = f'attachment; filename="asset_inventory_report_{datetime.now().strftime("%Y%m%d")}.pdf"'
@@ -880,6 +997,7 @@ def export_assets_pdf(request):
 
 # -- Allocations Exports --
 @login_required
+@system_admin_required
 def export_allocations_csv(request):
     response = HttpResponse(content_type='text/csv')
     response['Content-Disposition'] = f'attachment; filename="allocations_report_{datetime.now().strftime("%Y%m%d")}.csv"'
@@ -896,6 +1014,7 @@ def export_allocations_csv(request):
     return response
 
 @login_required
+@system_admin_required
 def export_allocations_excel(request):
     wb = openpyxl.Workbook()
     ws = wb.active
@@ -932,6 +1051,7 @@ def export_allocations_excel(request):
     return response
 
 @login_required
+@system_admin_required
 def export_allocations_pdf(request):
     response = HttpResponse(content_type='application/pdf')
     response['Content-Disposition'] = f'attachment; filename="allocations_report_{datetime.now().strftime("%Y%m%d")}.pdf"'
@@ -972,6 +1092,7 @@ def export_allocations_pdf(request):
 
 # -- Maintenance Exports --
 @login_required
+@system_admin_required
 def export_maintenance_csv(request):
     response = HttpResponse(content_type='text/csv')
     response['Content-Disposition'] = f'attachment; filename="maintenance_report_{datetime.now().strftime("%Y%m%d")}.csv"'
@@ -987,6 +1108,7 @@ def export_maintenance_csv(request):
     return response
 
 @login_required
+@system_admin_required
 def export_maintenance_excel(request):
     wb = openpyxl.Workbook()
     ws = wb.active
@@ -1021,6 +1143,7 @@ def export_maintenance_excel(request):
     return response
 
 @login_required
+@system_admin_required
 def export_maintenance_pdf(request):
     response = HttpResponse(content_type='application/pdf')
     response['Content-Disposition'] = f'attachment; filename="maintenance_report_{datetime.now().strftime("%Y%m%d")}.pdf"'
@@ -1075,22 +1198,27 @@ def custom_404(request, exception=None):
 def custom_403(request, exception=None):
     return render(request, '403.html', status=403)
 
-
 def register(request):
     if request.user.is_authenticated:
         return redirect('assets:dashboard')
         
     if request.method == 'POST':
-        form = SystemAdminRegistrationForm(request.POST)
+        form = UserRegistrationForm(request.POST)
         if form.is_valid():
-            user = form.save()
+            user = form.save(commit=False)
+            user.is_staff = False
+            user.is_superuser = False
+            user.save()
             profile, created = Profile.objects.get_or_create(user=user)
-            profile.role = 'SYSTEM_ADMIN'
+            profile.role = 'NORMAL_USER'
+            profile.account_status = 'APPROVED'
             profile.save()
-            messages.success(request, 'Your System Administrator account has been created successfully. You can now sign in.')
+            messages.success(request, 'Your account has been created successfully. You can now sign in.')
             return redirect('assets:register_success')
+        else:
+            messages.error(request, 'Please correct the errors below.')
     else:
-        form = SystemAdminRegistrationForm()
+        form = UserRegistrationForm()
         
     return render(request, 'assets/register.html', {'form': form})
 
@@ -1102,6 +1230,7 @@ def register_success(request):
     return render(request, 'assets/registration_success.html')
 
 @user_passes_test(lambda u: u.is_superuser)
+@system_admin_required
 def admin_management(request):
     profiles = Profile.objects.exclude(user=request.user).select_related('user')
     pending = profiles.filter(account_status='PENDING').order_by('-user__date_joined')
@@ -1120,6 +1249,7 @@ def admin_management(request):
 
 @require_POST
 @user_passes_test(lambda u: u.is_superuser)
+@system_admin_required
 def admin_management_action(request, action, user_id):
     if request.user.id == user_id:
         messages.error(request, 'You cannot perform this action on your own account.')
@@ -1147,3 +1277,329 @@ def admin_management_action(request, action, user_id):
         messages.error(request, 'Invalid action.')
         
     return redirect('assets:admin_management')
+
+
+# ==========================================
+# PHASE 3: DAMAGED EQUIPMENT VIEWS
+# ==========================================
+
+@login_required
+def damaged_equipment_list(request):
+    role = getattr(request.user, 'profile', None) and request.user.profile.role
+    if role == 'NORMAL_USER':
+        messages.error(request, "Access denied.")
+        return redirect('assets:dashboard')
+        
+    if role == 'SYSTEM_ADMIN':
+        damage_reports = DamagedEquipment.objects.select_related('asset', 'reported_by', 'assigned_technician').order_by('-created_at')
+    else:
+        # TECHNICIAN
+        damage_reports = DamagedEquipment.objects.select_related('asset', 'reported_by', 'assigned_technician').order_by('-created_at')
+        
+    return render(request, 'assets/damaged_equipment_list.html', {
+        'damage_reports': damage_reports,
+        'severity_choices': DamagedEquipment.SEVERITY_CHOICES,
+        'status_choices': DamagedEquipment.STATUS_CHOICES,
+    })
+
+@login_required
+def damaged_equipment_update(request, pk):
+    role = getattr(request.user, 'profile', None) and request.user.profile.role
+    if role not in ['SYSTEM_ADMIN', 'TECHNICIAN']:
+        messages.error(request, "Access denied.")
+        return redirect('assets:dashboard')
+        
+    report = get_object_or_404(DamagedEquipment, pk=pk)
+    
+    if request.method == 'POST':
+        status = request.POST.get('status')
+        resolution = request.POST.get('resolution', '')
+        
+        # Technician validation
+        if role == 'TECHNICIAN':
+            # Technicians can only modify if they are assigned, or if unassigned
+            if report.assigned_technician and report.assigned_technician != request.user:
+                messages.error(request, "This report is assigned to another technician.")
+                return redirect('assets:damaged_equipment_list')
+            if not report.assigned_technician:
+                report.assigned_technician = request.user
+                
+        if status:
+            report.status = status
+            
+        report.resolution = resolution
+        
+        if status == 'RESOLVED' and not report.resolved_date:
+            report.resolved_date = timezone.now().date()
+            
+        report.save()
+        messages.success(request, "Damage report updated successfully.")
+        
+    return redirect('assets:damaged_equipment_list')
+
+# ==========================================
+# PHASE 4: USER REQUEST VIEWS
+# ==========================================
+
+@login_required
+def user_requests(request):
+    role = getattr(request.user, 'profile', None) and request.user.profile.role
+    
+    if role == 'NORMAL_USER':
+        requests_list = UserRequest.objects.filter(user=request.user).select_related('asset', 'assigned_technician').order_by('-created_at')
+        my_allocations = Allocation.objects.filter(assigned_user=request.user, status__in=['Active', 'Partially Returned']).select_related('asset')
+        
+        if request.method == 'POST':
+            request_type = request.POST.get('request_type')
+            subject = request.POST.get('subject')
+            description = request.POST.get('description')
+            asset_id = request.POST.get('asset_id')
+            
+            asset = None
+            if request_type in ['Damage Report', 'Maintenance Request']:
+                if not asset_id:
+                    messages.error(request, f"Please select an asset for your {request_type}.")
+                    return redirect('assets:user_requests')
+                    
+                # Security: Verify the asset is actively assigned to the user
+                is_valid_asset = my_allocations.filter(asset_id=asset_id).exists()
+                if not is_valid_asset:
+                    messages.error(request, "Invalid asset selection. You can only report issues for equipment assigned to you.")
+                    return redirect('assets:user_requests')
+                asset = get_object_or_404(Asset, pk=asset_id)
+            else:
+                if asset_id:
+                    # Allow referencing an assigned asset if they want, but optional
+                    is_valid_asset = my_allocations.filter(asset_id=asset_id).exists()
+                    if is_valid_asset:
+                        asset = get_object_or_404(Asset, pk=asset_id)
+            
+            if request_type == 'Damage Report':
+                # Create DamagedEquipment directly
+                severity = request.POST.get('severity', 'LOW')
+                DamagedEquipment.objects.create(
+                    asset=asset,
+                    reported_by=request.user,
+                    damage_date=timezone.now().date(),
+                    damage_description=description,
+                    severity=severity,
+                    status='REPORTED'
+                )
+                messages.success(request, "Damage report submitted successfully.")
+            else:
+                UserRequest.objects.create(
+                    user=request.user,
+                    asset=asset,
+                    request_type=request_type,
+                    subject=subject,
+                    description=description,
+                    status='PENDING'
+                )
+                messages.success(request, "Support request submitted successfully.")
+                
+            return redirect('assets:user_requests')
+            
+        return render(request, 'assets/user_requests.html', {
+            'requests_list': requests_list,
+            'my_allocations': my_allocations,
+            'request_type_choices': UserRequest.REQUEST_TYPE_CHOICES,
+            'severity_choices': DamagedEquipment.SEVERITY_CHOICES
+        })
+        
+    elif role == 'TECHNICIAN':
+        return redirect('assets:technician_requests')
+    else:
+        # SYSTEM ADMIN
+        requests_list = UserRequest.objects.select_related('user', 'asset', 'assigned_technician').order_by('-created_at')
+        return render(request, 'assets/admin_requests.html', {
+            'requests_list': requests_list,
+            'status_choices': UserRequest.STATUS_CHOICES
+        })
+
+@login_required
+def technician_requests(request):
+    role = getattr(request.user, 'profile', None) and request.user.profile.role
+    if role not in ['TECHNICIAN', 'SYSTEM_ADMIN']:
+        messages.error(request, "Access denied.")
+        return redirect('assets:dashboard')
+        
+    requests_list = UserRequest.objects.select_related('user', 'asset', 'assigned_technician').order_by('-created_at')
+    
+    return render(request, 'assets/technician_requests.html', {
+        'requests_list': requests_list,
+        'status_choices': UserRequest.STATUS_CHOICES
+    })
+
+@login_required
+def request_update(request, pk):
+    role = getattr(request.user, 'profile', None) and request.user.profile.role
+    if role not in ['SYSTEM_ADMIN', 'TECHNICIAN']:
+        messages.error(request, "Access denied.")
+        return redirect('assets:dashboard')
+        
+    req = get_object_or_404(UserRequest, pk=pk)
+    
+    if request.method == 'POST':
+        status = request.POST.get('status')
+        technician_response = request.POST.get('technician_response', '')
+        
+        # Technician validation
+        if role == 'TECHNICIAN':
+            if req.assigned_technician and req.assigned_technician != request.user:
+                messages.error(request, "This request is assigned to another technician.")
+                return redirect('assets:technician_requests')
+            if not req.assigned_technician:
+                req.assigned_technician = request.user
+                
+        if status:
+            req.status = status
+            
+        if technician_response:
+            req.technician_response = technician_response
+            
+        if status == 'RESOLVED' and not req.resolved_at:
+            req.resolved_at = timezone.now()
+            
+        req.save()
+        messages.success(request, "Request updated successfully.")
+        
+    if role == 'SYSTEM_ADMIN':
+        return redirect('assets:user_requests') # admin uses user_requests URL as its base
+    return redirect('assets:technician_requests')
+
+# ==========================================
+# PHASE 5: FEEDBACK VIEWS
+# ==========================================
+
+@login_required
+def submit_feedback(request, pk):
+    req = get_object_or_404(UserRequest, pk=pk)
+    
+    # Validation: request belongs to logged-in user
+    if req.user != request.user:
+        messages.error(request, "You can only submit feedback for your own requests.")
+        return redirect('assets:user_requests')
+        
+    # Validation: request is resolved
+    if req.status != 'RESOLVED':
+        messages.error(request, "You can only submit feedback for resolved requests.")
+        return redirect('assets:user_requests')
+        
+    # Validation: feedback does not already exist
+    if hasattr(req, 'feedback'):
+        messages.error(request, "Feedback has already been submitted for this request.")
+        return redirect('assets:user_requests')
+        
+    if request.method == 'POST':
+        rating = request.POST.get('rating')
+        feedback_text = request.POST.get('feedback', '')
+        
+        if not rating or not str(rating).isdigit() or not (1 <= int(rating) <= 5):
+            messages.error(request, "Invalid rating value.")
+            return redirect('assets:user_requests')
+            
+        UserFeedback.objects.create(
+            request=req,
+            user=request.user,
+            rating=int(rating),
+            feedback=feedback_text
+        )
+        messages.success(request, "Thank you for your feedback!")
+        
+    return redirect('assets:user_requests')
+
+# ==========================================
+# ADMIN PEOPLE & FEEDBACK MANAGEMENT
+# ==========================================
+
+@login_required
+@system_admin_required
+def user_list(request):
+    users = User.objects.filter(profile__role='NORMAL_USER').select_related('profile').order_by('-date_joined')
+    # Count assigned equipment, requests
+    users = users.annotate(
+        assigned_equipment_count=Count('allocations', filter=Q(allocations__status__in=['Active', 'Partially Returned'])),
+        request_count=Count('support_requests')
+    )
+    return render(request, 'assets/user_list.html', {'users': users})
+
+@login_required
+@system_admin_required
+def technician_list(request):
+    technicians = User.objects.filter(profile__role='TECHNICIAN').select_related('profile').order_by('-date_joined')
+    # Count requests, damage reports assigned
+    technicians = technicians.annotate(
+        assigned_requests_count=Count('assigned_support_requests'),
+        assigned_damage_count=Count('assigned_damage_reports')
+    )
+    return render(request, 'assets/technician_list.html', {'technicians': technicians})
+
+@require_POST
+@login_required
+@system_admin_required
+def user_action(request, action, user_id):
+    target_user = get_object_or_404(User, pk=user_id)
+    
+    # Security: Only operate on NORMAL_USER
+    if not hasattr(target_user, 'profile') or target_user.profile.role != 'NORMAL_USER':
+        messages.error(request, "Invalid operation. Target is not a Normal User.")
+        return redirect('assets:user_list')
+        
+    if action == 'enable':
+        target_user.is_active = True
+        target_user.profile.account_status = 'APPROVED'
+        messages.success(request, f"User {target_user.username} enabled.")
+    elif action == 'disable':
+        target_user.is_active = False
+        target_user.profile.account_status = 'REJECTED'
+        messages.success(request, f"User {target_user.username} disabled.")
+        
+    target_user.save()
+    target_user.profile.save()
+    
+    return redirect('assets:user_list')
+
+@require_POST
+@login_required
+@system_admin_required
+def technician_action(request, action, user_id):
+    target_user = get_object_or_404(User, pk=user_id)
+    
+    # Security: Do not allow disabling self
+    if target_user == request.user:
+        messages.error(request, "You cannot disable your own account.")
+        return redirect('assets:technician_list')
+        
+    # Security: Only operate on TECHNICIAN
+    if not hasattr(target_user, 'profile') or target_user.profile.role != 'TECHNICIAN':
+        messages.error(request, "Invalid operation. Target is not a Technician.")
+        return redirect('assets:technician_list')
+        
+    if action == 'enable':
+        target_user.is_active = True
+        target_user.profile.account_status = 'APPROVED'
+        messages.success(request, f"Technician {target_user.username} enabled.")
+    elif action == 'disable':
+        target_user.is_active = False
+        target_user.profile.account_status = 'REJECTED'
+        messages.success(request, f"Technician {target_user.username} disabled.")
+        
+    target_user.save()
+    target_user.profile.save()
+    
+    return redirect('assets:technician_list')
+
+@login_required
+@system_admin_required
+def feedback_list(request):
+    feedbacks = UserFeedback.objects.select_related('request', 'user', 'request__assigned_technician', 'request__asset').order_by('-created_at')
+    
+    total_feedback = feedbacks.count()
+    avg_rating = feedbacks.aggregate(avg=Avg('rating'))['avg'] or 0
+    
+    context = {
+        'feedbacks': feedbacks,
+        'total_feedback': total_feedback,
+        'avg_rating': round(avg_rating, 1)
+    }
+    return render(request, 'assets/feedback_list.html', context)

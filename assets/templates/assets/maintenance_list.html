@@ -9,9 +9,11 @@
         <h2 class="h4 fw-bold" style="color: var(--sidebar-bg);">Maintenance Management</h2>
         <p class="text-muted mb-0">Track asset servicing, repairs, and maintenance activities.</p>
     </div>
+    {% if user.profile.role == 'SYSTEM_ADMIN' %}
     <button class="btn btn-success d-flex align-items-center gap-2 px-3 py-2" data-bs-toggle="modal" data-bs-target="#addMaintenanceModal" style="background-color: var(--sidebar-bg); border-color: var(--sidebar-bg);">
         <i class="bi bi-plus-lg"></i> Add Maintenance Record
     </button>
+    {% endif %}
 </div>
 
 <!-- Maintenance Summary Cards -->
@@ -233,9 +235,11 @@
                 <i class="bi bi-tools display-1 text-muted mb-4 d-block opacity-50"></i>
                 <h5 class="fw-medium text-dark mb-2">No maintenance records found.</h5>
                 <p class="text-muted mb-4">Start tracking asset servicing and repairs.</p>
+                {% if user.profile.role == 'SYSTEM_ADMIN' %}
                 <button class="btn btn-success px-4 py-2" data-bs-toggle="modal" data-bs-target="#addMaintenanceModal" style="background-color: var(--sidebar-bg); border-color: var(--sidebar-bg);">
                     <i class="bi bi-plus-lg me-2"></i> Add Your First Record
                 </button>
+                {% endif %}
             </div>
         {% endif %}
     </div>

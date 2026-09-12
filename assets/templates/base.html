@@ -260,49 +260,96 @@
             </div>
             
             <div class="nav-items">
-                <a href="{% url 'assets:dashboard' %}" class="nav-link text-decoration-none {% if request.resolver_match.url_name == 'dashboard' %}active{% endif %}">
-                    <i class="bi bi-speedometer2"></i> Dashboard
-                </a>
-                <a href="{% url 'assets:asset_list' %}" class="nav-link text-decoration-none {% if request.resolver_match.url_name == 'asset_list' %}active{% endif %}">
-                    <i class="bi bi-box-seam"></i> Assets
-                </a>
-                <a href="{% url 'assets:category_list' %}" class="nav-link text-decoration-none {% if request.resolver_match.url_name == 'category_list' %}active{% endif %}">
-                    <i class="bi bi-collection"></i> Categories
-                </a>
-                <a href="{% url 'assets:department_list' %}" class="nav-link text-decoration-none {% if request.resolver_match.url_name == 'department_list' %}active{% endif %}">
-                    <i class="bi bi-building"></i> Departments
-                </a>
-                <a href="{% url 'assets:allocation_list' %}" class="nav-link text-decoration-none {% if request.resolver_match.url_name == 'allocation_list' %}active{% endif %}">
-                    <i class="bi bi-arrow-left-right"></i> Allocations
-                </a>
-                <a href="{% url 'assets:maintenance_list' %}" class="nav-link text-decoration-none {% if request.resolver_match.url_name == 'maintenance_list' or request.resolver_match.url_name == 'maintenance_add' or request.resolver_match.url_name == 'maintenance_edit' or request.resolver_match.url_name == 'maintenance_delete' %}active{% endif %}">
-                    <i class="bi bi-tools"></i> Maintenance
-                </a>
-                
-                <a href="{% url 'assets:reports' %}" class="nav-link text-decoration-none {% if request.resolver_match.url_name == 'reports' %}active{% endif %}">
-                    <i class="bi bi-bar-chart-line"></i> Reports
-                </a>
+    <a href="{% url 'assets:dashboard' %}" class="nav-link text-decoration-none {% if request.resolver_match.url_name == 'dashboard' %}active{% endif %}">
+        <i class="bi bi-speedometer2"></i> Dashboard
+    </a>
 
-                <div class="nav-section-title mt-4">General</div>
-                {% if request.user.is_superuser %}
-                <a href="{% url 'assets:admin_management' %}" class="nav-link text-decoration-none {% if request.resolver_match.url_name == 'admin_management' %}active{% endif %}">
-                    <i class="bi bi-shield-lock"></i> Admin Management
-                </a>
-                {% endif %}
-                <a href="{% url 'assets:profile' %}" class="nav-link text-decoration-none {% if request.resolver_match.url_name == 'profile' %}active{% endif %}">
-                    <i class="bi bi-person-circle"></i> Profile
-                </a>
-                <a href="{% url 'assets:settings' %}" class="nav-link text-decoration-none {% if request.resolver_match.url_name == 'settings' or request.resolver_match.url_name == 'change_password' %}active{% endif %}">
-                    <i class="bi bi-gear"></i> Settings
-                </a>
-                <form method="post" action="{% url 'assets:logout' %}" class="d-inline w-100">
-                    {% csrf_token %}
-                    <button type="submit" class="nav-link text-decoration-none text-start bg-transparent border-0 w-100">
-                        <i class="bi bi-box-arrow-right"></i> Logout
-                    </button>
-                </form>
-            </div>
-        </nav>
+    {% if user.profile.role == 'NORMAL_USER' %}
+    <a href="{% url 'assets:user_requests' %}" class="nav-link text-decoration-none {% if request.resolver_match.url_name == 'user_requests' %}active{% endif %}">
+        <i class="bi bi-headset"></i> My Requests
+    </a>
+    {% endif %}
+
+    {% if user.profile.role == 'SYSTEM_ADMIN' %}
+    <div class="nav-section-title mt-4">ASSET MANAGEMENT</div>
+    <a href="{% url 'assets:asset_list' %}" class="nav-link text-decoration-none {% if request.resolver_match.url_name == 'asset_list' %}active{% endif %}">
+        <i class="bi bi-box-seam"></i> Assets
+    </a>
+    <a href="{% url 'assets:category_list' %}" class="nav-link text-decoration-none {% if request.resolver_match.url_name == 'category_list' %}active{% endif %}">
+        <i class="bi bi-collection"></i> Categories
+    </a>
+    <a href="{% url 'assets:department_list' %}" class="nav-link text-decoration-none {% if request.resolver_match.url_name == 'department_list' %}active{% endif %}">
+        <i class="bi bi-building"></i> Departments
+    </a>
+    <a href="{% url 'assets:allocation_list' %}" class="nav-link text-decoration-none {% if request.resolver_match.url_name == 'allocation_list' %}active{% endif %}">
+        <i class="bi bi-arrow-left-right"></i> Allocations
+    </a>
+
+    <div class="nav-section-title mt-4">OPERATIONS</div>
+    <a href="{% url 'assets:maintenance_list' %}" class="nav-link text-decoration-none {% if 'maintenance' in request.resolver_match.url_name %}active{% endif %}">
+        <i class="bi bi-tools"></i> Maintenance
+    </a>
+    <a href="{% url 'assets:damaged_equipment_list' %}" class="nav-link text-decoration-none {% if request.resolver_match.url_name == 'damaged_equipment_list' %}active{% endif %}">
+        <i class="bi bi-exclamation-triangle"></i> Damaged Equipment
+    </a>
+    <a href="{% url 'assets:technician_requests' %}" class="nav-link text-decoration-none {% if 'requests' in request.resolver_match.url_name %}active{% endif %}">
+        <i class="bi bi-headset"></i> Support Requests
+    </a>
+
+    <div class="nav-section-title mt-4">PEOPLE</div>
+    <a href="{% url 'assets:user_list' %}" class="nav-link text-decoration-none {% if 'user_list' in request.resolver_match.url_name %}active{% endif %}">
+        <i class="bi bi-people"></i> Users
+    </a>
+    <a href="{% url 'assets:technician_list' %}" class="nav-link text-decoration-none {% if 'technician_list' in request.resolver_match.url_name %}active{% endif %}">
+        <i class="bi bi-person-badge"></i> Technicians
+    </a>
+
+    <div class="nav-section-title mt-4">INSIGHTS</div>
+    <a href="{% url 'assets:reports' %}" class="nav-link text-decoration-none {% if request.resolver_match.url_name == 'reports' %}active{% endif %}">
+        <i class="bi bi-bar-chart-line"></i> Reports
+    </a>
+    <a href="{% url 'assets:feedback_list' %}" class="nav-link text-decoration-none {% if request.resolver_match.url_name == 'feedback_list' %}active{% endif %}">
+        <i class="bi bi-star"></i> Feedback
+    </a>
+    
+    <div class="nav-section-title mt-4">SYSTEM</div>
+    {% if request.user.is_superuser %}
+    <a href="{% url 'assets:admin_management' %}" class="nav-link text-decoration-none {% if request.resolver_match.url_name == 'admin_management' %}active{% endif %}">
+        <i class="bi bi-shield-lock"></i> Admin Management
+    </a>
+    {% endif %}
+    <a href="{% url 'assets:settings' %}" class="nav-link text-decoration-none {% if request.resolver_match.url_name == 'settings' or request.resolver_match.url_name == 'change_password' %}active{% endif %}">
+        <i class="bi bi-gear"></i> Settings
+    </a>
+    {% endif %}
+
+    {% if user.profile.role == 'TECHNICIAN' %}
+    <a href="{% url 'assets:asset_list' %}" class="nav-link text-decoration-none {% if request.resolver_match.url_name == 'asset_list' %}active{% endif %}">
+        <i class="bi bi-box-seam"></i> Equipment
+    </a>
+    <a href="{% url 'assets:damaged_equipment_list' %}" class="nav-link text-decoration-none {% if request.resolver_match.url_name == 'damaged_equipment_list' %}active{% endif %}">
+        <i class="bi bi-exclamation-triangle"></i> Damaged Reports
+    </a>
+    <a href="{% url 'assets:technician_requests' %}" class="nav-link text-decoration-none {% if 'requests' in request.resolver_match.url_name %}active{% endif %}">
+        <i class="bi bi-headset"></i> Support Requests
+    </a>
+    <a href="{% url 'assets:maintenance_list' %}" class="nav-link text-decoration-none {% if 'maintenance' in request.resolver_match.url_name %}active{% endif %}">
+        <i class="bi bi-tools"></i> Maintenance
+    </a>
+    {% endif %}
+
+    <div class="nav-section-title mt-4">{% if user.profile.role == 'NORMAL_USER' or user.profile.role == 'TECHNICIAN' %}General{% endif %}</div>
+    <a href="{% url 'assets:profile' %}" class="nav-link text-decoration-none {% if request.resolver_match.url_name == 'profile' %}active{% endif %}">
+        <i class="bi bi-person-circle"></i> Profile
+    </a>
+    <form method="post" action="{% url 'assets:logout' %}" class="d-inline w-100">
+        {% csrf_token %}
+        <button type="submit" class="nav-link text-decoration-none text-start bg-transparent border-0 w-100">
+            <i class="bi bi-box-arrow-right"></i> Logout
+        </button>
+    </form>
+</div>
+</nav>
 
         <!-- Main Content Area -->
         <div class="main-content">

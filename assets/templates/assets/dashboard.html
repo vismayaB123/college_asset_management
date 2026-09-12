@@ -1,125 +1,137 @@
 {% extends 'base.html' %}
-
 {% block title %}Dashboard | Campus Assets{% endblock %}
 {% block page_title %}Dashboard{% endblock %}
 
 {% block content %}
 <div class="mb-4">
-    <h2 class="h4 fw-bold" style="color: var(--sidebar-bg);">Asset Management Overview</h2>
-    <p class="text-muted">Monitor and manage your college assets and equipment from one centralized platform.</p>
+    <h2 class="h4 fw-bold" style="color: var(--sidebar-bg);">System Administration Overview</h2>
+    <p class="text-muted">Monitor and manage your college assets and operations from one centralized platform.</p>
 </div>
 
-<!-- STATISTICS SECTION -->
-<div class="row g-4 mb-5">
-    <div class="col-md-3 col-sm-6">
+<!-- ASSETS SECTION -->
+<h5 class="fw-bold mb-3" style="color: var(--sidebar-bg);">Asset Overview</h5>
+<div class="row g-4 mb-4">
+    <div class="col-md-2 col-sm-4">
         <div class="card border-0 shadow-sm rounded-3 h-100" style="border-left: 4px solid var(--sidebar-bg) !important;">
             <div class="card-body">
-                <div class="d-flex align-items-center mb-3">
-                    <div class="bg-light rounded p-2 text-center" style="width: 40px; height: 40px;">
-                        <i class="bi bi-box-seam fs-5" style="color: var(--sidebar-bg);"></i>
-                    </div>
-                    <h6 class="card-subtitle text-muted ms-3 mb-0">Total Assets</h6>
-                </div>
-                <h3 class="card-title fw-bold mb-0 important-number">{{ total_assets }}</h3>
+                <h6 class="card-subtitle text-muted mb-2">Total Records</h6>
+                <h4 class="fw-bold mb-0">{{ total_assets }}</h4>
             </div>
         </div>
     </div>
-    
-    <div class="col-md-3 col-sm-6">
+    <div class="col-md-2 col-sm-4">
+        <div class="card border-0 shadow-sm rounded-3 h-100" style="border-left: 4px solid var(--sidebar-bg) !important;">
+            <div class="card-body">
+                <h6 class="card-subtitle text-muted mb-2">Total Qty</h6>
+                <h4 class="fw-bold mb-0">{{ total_asset_quantity }}</h4>
+            </div>
+        </div>
+    </div>
+    <div class="col-md-2 col-sm-4">
         <div class="card border-0 shadow-sm rounded-3 h-100" style="border-left: 4px solid #198754 !important;">
             <div class="card-body">
-                <div class="d-flex align-items-center mb-3">
-                    <div class="bg-light rounded p-2 text-center" style="width: 40px; height: 40px;">
-                        <i class="bi bi-check-circle fs-5 text-success"></i>
-                    </div>
-                    <h6 class="card-subtitle text-muted ms-3 mb-0">Available Assets</h6>
-                </div>
-                <h3 class="card-title fw-bold mb-0 important-number">{{ available_assets }}</h3>
+                <h6 class="card-subtitle text-muted mb-2">Available</h6>
+                <h4 class="fw-bold mb-0 text-success">{{ available_quantity }}</h4>
             </div>
         </div>
     </div>
-    
-    <div class="col-md-3 col-sm-6">
+    <div class="col-md-2 col-sm-4">
         <div class="card border-0 shadow-sm rounded-3 h-100" style="border-left: 4px solid #0dcaf0 !important;">
             <div class="card-body">
-                <div class="d-flex align-items-center mb-3">
-                    <div class="bg-light rounded p-2 text-center" style="width: 40px; height: 40px;">
-                        <i class="bi bi-arrow-left-right fs-5 text-info"></i>
-                    </div>
-                    <h6 class="card-subtitle text-muted ms-3 mb-0">Allocated Assets</h6>
-                </div>
-                <h3 class="card-title fw-bold mb-0 important-number">{{ allocated_assets }}</h3>
+                <h6 class="card-subtitle text-muted mb-2">Allocated</h6>
+                <h4 class="fw-bold mb-0 text-info">{{ allocated_quantity }}</h4>
             </div>
         </div>
     </div>
-    
-    <div class="col-md-3 col-sm-6">
+    <div class="col-md-2 col-sm-4">
         <div class="card border-0 shadow-sm rounded-3 h-100" style="border-left: 4px solid #ffc107 !important;">
             <div class="card-body">
-                <div class="d-flex align-items-center mb-3">
-                    <div class="bg-light rounded p-2 text-center" style="width: 40px; height: 40px;">
-                        <i class="bi bi-tools fs-5 text-warning"></i>
-                    </div>
-                    <h6 class="card-subtitle text-muted ms-3 mb-0">Under Maintenance</h6>
-                </div>
-                <h3 class="card-title fw-bold mb-0 important-number">{{ maintenance_assets }}</h3>
+                <h6 class="card-subtitle text-muted mb-2">In Maint.</h6>
+                <h4 class="fw-bold mb-0 text-warning">{{ maintenance_assets }}</h4>
+            </div>
+        </div>
+    </div>
+    <div class="col-md-2 col-sm-4">
+        <div class="card border-0 shadow-sm rounded-3 h-100" style="border-left: 4px solid #dc3545 !important;">
+            <div class="card-body">
+                <h6 class="card-subtitle text-muted mb-2">Damaged</h6>
+                <h4 class="fw-bold mb-0 text-danger">{{ damaged_equipment }}</h4>
             </div>
         </div>
     </div>
 </div>
 
-<!-- MIDDLE SECTION -->
-<div class="row g-4 mb-5">
-    <div class="col-lg-6">
-        <div class="card border-0 shadow-sm rounded-3 h-100">
-            <div class="card-header bg-white border-0 pt-4 pb-0">
-                <h5 class="fw-bold" style="color: var(--sidebar-bg);">Assets by Category</h5>
-            </div>
-            <div class="card-body">
-                {% if categories %}
-                    <ul class="list-group list-group-flush">
-                        {% for category in categories %}
-                        <li class="list-group-item d-flex justify-content-between align-items-center border-0 px-0 py-3">
-                            <span><i class="bi bi-tag text-muted me-2"></i> {{ category.name }}</span>
-                            <span class="badge bg-light text-dark border rounded-pill">{{ category.asset_count }}</span>
-                        </li>
-                        {% endfor %}
-                    </ul>
-                {% else %}
-                    <div class="text-center py-5">
-                        <i class="bi bi-folder2-open display-4 text-muted mb-3 d-block"></i>
-                        <p class="text-muted">No categories available yet.</p>
+<div class="row mb-5">
+    <!-- OPERATIONS SECTION -->
+    <div class="col-lg-8">
+        <h5 class="fw-bold mb-3" style="color: var(--sidebar-bg);">Operations</h5>
+        <div class="row g-4">
+            <div class="col-sm-3">
+                <div class="card border-0 shadow-sm rounded-3 h-100 text-center">
+                    <div class="card-body">
+                        <i class="bi bi-arrow-left-right fs-2 text-primary mb-2"></i>
+                        <h6 class="text-muted mb-1">Active Allocations</h6>
+                        <h4 class="fw-bold">{{ active_allocations }}</h4>
                     </div>
-                {% endif %}
+                </div>
+            </div>
+            <div class="col-sm-3">
+                <div class="card border-0 shadow-sm rounded-3 h-100 text-center">
+                    <div class="card-body">
+                        <i class="bi bi-clock-history fs-2 text-warning mb-2"></i>
+                        <h6 class="text-muted mb-1">Pending Returns</h6>
+                        <h4 class="fw-bold">{{ pending_returns }}</h4>
+                    </div>
+                </div>
+            </div>
+            <div class="col-sm-3">
+                <div class="card border-0 shadow-sm rounded-3 h-100 text-center">
+                    <div class="card-body">
+                        <i class="bi bi-headset fs-2 text-info mb-2"></i>
+                        <h6 class="text-muted mb-1">Pending Requests</h6>
+                        <h4 class="fw-bold">{{ pending_requests }}</h4>
+                    </div>
+                </div>
+            </div>
+            <div class="col-sm-3">
+                <div class="card border-0 shadow-sm rounded-3 h-100 text-center">
+                    <div class="card-body">
+                        <i class="bi bi-check-circle fs-2 text-success mb-2"></i>
+                        <h6 class="text-muted mb-1">Resolved Requests</h6>
+                        <h4 class="fw-bold">{{ resolved_requests }}</h4>
+                    </div>
+                </div>
             </div>
         </div>
     </div>
-    
-    <div class="col-lg-6">
-        <div class="card border-0 shadow-sm rounded-3 h-100">
-            <div class="card-header bg-white border-0 pt-4 pb-0">
-                <h5 class="fw-bold" style="color: var(--sidebar-bg);">Asset Condition Overview</h5>
-            </div>
-            <div class="card-body">
-                <div class="mt-2">
-                    {% for condition in conditions_data %}
-                    <div class="mb-4">
-                        <div class="d-flex justify-content-between align-items-center mb-2">
-                            <span class="fw-medium text-dark">{{ condition.name }}</span>
-                            <span class="text-muted small">{{ condition.count }}</span>
-                        </div>
-                        <div class="progress rounded-pill" style="height: 8px;">
-                            <div class="progress-bar bg-{{ condition.color }}" role="progressbar" style="width: {{ condition.percentage }}%;" aria-valuenow="{{ condition.percentage }}" aria-valuemin="0" aria-valuemax="100"></div>
-                        </div>
+
+    <!-- PEOPLE SECTION -->
+    <div class="col-lg-4">
+        <h5 class="fw-bold mb-3" style="color: var(--sidebar-bg);">People</h5>
+        <div class="row g-4">
+            <div class="col-sm-6">
+                <div class="card border-0 shadow-sm rounded-3 h-100 text-center">
+                    <div class="card-body">
+                        <i class="bi bi-people fs-2 text-secondary mb-2"></i>
+                        <h6 class="text-muted mb-1">Total Users</h6>
+                        <h4 class="fw-bold">{{ total_users }}</h4>
                     </div>
-                    {% endfor %}
+                </div>
+            </div>
+            <div class="col-sm-6">
+                <div class="card border-0 shadow-sm rounded-3 h-100 text-center">
+                    <div class="card-body">
+                        <i class="bi bi-person-badge fs-2 text-secondary mb-2"></i>
+                        <h6 class="text-muted mb-1">Total Technicians</h6>
+                        <h4 class="fw-bold">{{ total_technicians }}</h4>
+                    </div>
                 </div>
             </div>
         </div>
     </div>
 </div>
 
-<!-- BOTTOM SECTION -->
+<!-- RECENT ACTIVITY -->
 <div class="row g-4">
     <div class="col-lg-6">
         <div class="card border-0 shadow-sm rounded-3 h-100">
@@ -128,44 +140,41 @@
             </div>
             <div class="card-body">
                 {% if recent_allocations %}
-                    <div class="table-responsive">
-                        <table class="table table-borderless align-middle mt-2">
-                            <thead class="text-muted small border-bottom">
-                                <tr>
-                                    <th class="ps-0">Asset</th>
-                                    <th>Dept</th>
-                                    <th>Date</th>
-                                    <th class="text-end pe-0">Status</th>
-                                </tr>
-                            </thead>
-                            <tbody>
-                                {% for alloc in recent_allocations %}
-                                <tr>
-                                    <td class="ps-0">
-                                        <div class="fw-medium text-dark">{{ alloc.asset.name }}</div>
-                                        <div class="small text-muted">Qty: {{ alloc.quantity }}</div>
-                                    </td>
-                                    <td>{{ alloc.department.code }}</td>
-                                    <td>{{ alloc.allocation_date|date:"M d, Y" }}</td>
-                                    <td class="text-end pe-0">
-                                        {% if alloc.status == 'Active' %}
-                                            <span class="badge bg-success-subtle text-success border border-success-subtle px-2 py-1">Active</span>
-                                        {% elif alloc.status == 'Returned' %}
-                                            <span class="badge bg-secondary-subtle text-secondary border border-secondary-subtle px-2 py-1">Returned</span>
-                                        {% else %}
-                                            <span class="badge bg-info-subtle text-info border border-info-subtle px-2 py-1">{{ alloc.status }}</span>
-                                        {% endif %}
-                                    </td>
-                                </tr>
-                                {% endfor %}
-                            </tbody>
-                        </table>
-                    </div>
+                <div class="table-responsive">
+                    <table class="table table-borderless align-middle mt-2">
+                        <thead class="text-muted small border-bottom">
+                            <tr>
+                                <th class="ps-0">Asset</th>
+                                <th>Dept/User</th>
+                                <th>Type</th>
+                                <th class="text-end pe-0">Status</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            {% for alloc in recent_allocations %}
+                            <tr>
+                                <td class="ps-0">
+                                    <div class="fw-medium text-dark">{{ alloc.asset.name }}</div>
+                                    <div class="small text-muted">Qty: {{ alloc.quantity }} | {{ alloc.allocation_date|date:"M d, y" }}</div>
+                                </td>
+                                <td>{{ alloc.assigned_user.get_full_name|default:alloc.department.code|default:"-" }}</td>
+                                <td>{{ alloc.allocation_type }}</td>
+                                <td class="text-end pe-0">
+                                    {% if alloc.status == 'Active' %}
+                                        <span class="badge bg-success-subtle text-success rounded-pill px-3">{{ alloc.status }}</span>
+                                    {% elif alloc.status == 'Returned' %}
+                                        <span class="badge bg-secondary-subtle text-secondary rounded-pill px-3">{{ alloc.status }}</span>
+                                    {% else %}
+                                        <span class="badge bg-info-subtle text-info rounded-pill px-3">{{ alloc.status }}</span>
+                                    {% endif %}
+                                </td>
+                            </tr>
+                            {% endfor %}
+                        </tbody>
+                    </table>
+                </div>
                 {% else %}
-                    <div class="text-center py-5">
-                        <i class="bi bi-arrow-left-right display-4 text-muted mb-3 d-block"></i>
-                        <p class="text-muted">No recent allocations.</p>
-                    </div>
+                <p class="text-muted text-center my-4">No recent allocations.</p>
                 {% endif %}
             </div>
         </div>
@@ -174,48 +183,135 @@
     <div class="col-lg-6">
         <div class="card border-0 shadow-sm rounded-3 h-100">
             <div class="card-header bg-white border-0 pt-4 pb-0">
+                <h5 class="fw-bold" style="color: var(--sidebar-bg);">Recent Support Requests</h5>
+            </div>
+            <div class="card-body">
+                {% if recent_support_requests %}
+                <div class="table-responsive">
+                    <table class="table table-borderless align-middle mt-2">
+                        <thead class="text-muted small border-bottom">
+                            <tr>
+                                <th class="ps-0">Subject</th>
+                                <th>User</th>
+                                <th>Technician</th>
+                                <th class="text-end pe-0">Status</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            {% for req in recent_support_requests %}
+                            <tr>
+                                <td class="ps-0">
+                                    <div class="fw-medium text-dark">{{ req.subject }}</div>
+                                    <div class="small text-muted">{{ req.request_type }} | {{ req.asset.asset_code }}</div>
+                                </td>
+                                <td>{{ req.user.get_full_name|default:req.user.username }}</td>
+                                <td>{{ req.assigned_technician.get_full_name|default:"-" }}</td>
+                                <td class="text-end pe-0">
+                                    {% if req.status == 'PENDING' %}
+                                        <span class="badge bg-secondary">Pending</span>
+                                    {% elif req.status == 'IN_PROGRESS' %}
+                                        <span class="badge bg-warning text-dark">In Progress</span>
+                                    {% else %}
+                                        <span class="badge bg-success">{{ req.status }}</span>
+                                    {% endif %}
+                                </td>
+                            </tr>
+                            {% endfor %}
+                        </tbody>
+                    </table>
+                </div>
+                {% else %}
+                <p class="text-muted text-center my-4">No recent support requests.</p>
+                {% endif %}
+            </div>
+        </div>
+    </div>
+    
+    <div class="col-lg-6">
+        <div class="card border-0 shadow-sm rounded-3 h-100">
+            <div class="card-header bg-white border-0 pt-4 pb-0">
+                <h5 class="fw-bold" style="color: var(--sidebar-bg);">Recent Damage Reports</h5>
+            </div>
+            <div class="card-body">
+                {% if recent_damage_reports %}
+                <div class="table-responsive">
+                    <table class="table table-borderless align-middle mt-2">
+                        <thead class="text-muted small border-bottom">
+                            <tr>
+                                <th class="ps-0">Asset</th>
+                                <th>Reported By</th>
+                                <th>Severity</th>
+                                <th class="text-end pe-0">Status</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            {% for rep in recent_damage_reports %}
+                            <tr>
+                                <td class="ps-0">
+                                    <div class="fw-medium text-dark">{{ rep.asset.name }}</div>
+                                    <div class="small text-muted">{{ rep.asset.asset_code }}</div>
+                                </td>
+                                <td>{{ rep.reported_by.get_full_name|default:rep.reported_by.username }}</td>
+                                <td>{{ rep.severity }}</td>
+                                <td class="text-end pe-0">
+                                    {% if rep.status == 'REPORTED' %}
+                                        <span class="badge bg-secondary">Reported</span>
+                                    {% else %}
+                                        <span class="badge bg-info">{{ rep.status }}</span>
+                                    {% endif %}
+                                </td>
+                            </tr>
+                            {% endfor %}
+                        </tbody>
+                    </table>
+                </div>
+                {% else %}
+                <p class="text-muted text-center my-4">No recent damage reports.</p>
+                {% endif %}
+            </div>
+        </div>
+    </div>
+
+    <div class="col-lg-6">
+        <div class="card border-0 shadow-sm rounded-3 h-100">
+            <div class="card-header bg-white border-0 pt-4 pb-0">
                 <h5 class="fw-bold" style="color: var(--sidebar-bg);">Recent Maintenance</h5>
             </div>
             <div class="card-body">
                 {% if recent_maintenance %}
-                    <div class="table-responsive">
-                        <table class="table table-borderless align-middle mt-2">
-                            <thead class="text-muted small border-bottom">
-                                <tr>
-                                    <th class="ps-0">Asset</th>
-                                    <th>Date</th>
-                                    <th>Cost</th>
-                                    <th class="text-end pe-0">Status</th>
-                                </tr>
-                            </thead>
-                            <tbody>
-                                {% for maint in recent_maintenance %}
-                                <tr>
-                                    <td class="ps-0">
-                                        <div class="fw-medium text-dark">{{ maint.asset.name }}</div>
-                                        <div class="small text-muted">{{ maint.technician|default:"Unassigned" }}</div>
-                                    </td>
-                                    <td>{{ maint.maintenance_date|date:"M d, Y" }}</td>
-                                    <td>₹{{ maint.cost|floatformat:2 }}</td>
-                                    <td class="text-end pe-0">
-                                        {% if maint.status == 'Completed' %}
-                                            <span class="badge bg-success-subtle text-success border border-success-subtle px-2 py-1">Completed</span>
-                                        {% elif maint.status == 'Pending' %}
-                                            <span class="badge bg-warning-subtle text-warning border border-warning-subtle px-2 py-1">Pending</span>
-                                        {% else %}
-                                            <span class="badge bg-info-subtle text-info border border-info-subtle px-2 py-1">{{ maint.status }}</span>
-                                        {% endif %}
-                                    </td>
-                                </tr>
-                                {% endfor %}
-                            </tbody>
-                        </table>
-                    </div>
+                <div class="table-responsive">
+                    <table class="table table-borderless align-middle mt-2">
+                        <thead class="text-muted small border-bottom">
+                            <tr>
+                                <th class="ps-0">Asset</th>
+                                <th>Date</th>
+                                <th>Technician</th>
+                                <th class="text-end pe-0">Status</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            {% for main in recent_maintenance %}
+                            <tr>
+                                <td class="ps-0">
+                                    <div class="fw-medium text-dark">{{ main.asset.name }}</div>
+                                    <div class="small text-muted">{{ main.asset.asset_code }}</div>
+                                </td>
+                                <td>{{ main.maintenance_date|date:"M d, Y" }}</td>
+                                <td>{{ main.performed_by|default:"-" }}</td>
+                                <td class="text-end pe-0">
+                                    {% if main.status == 'Completed' %}
+                                        <span class="badge bg-success-subtle text-success rounded-pill px-3">{{ main.status }}</span>
+                                    {% else %}
+                                        <span class="badge bg-warning-subtle text-warning rounded-pill px-3">{{ main.status }}</span>
+                                    {% endif %}
+                                </td>
+                            </tr>
+                            {% endfor %}
+                        </tbody>
+                    </table>
+                </div>
                 {% else %}
-                    <div class="text-center py-5">
-                        <i class="bi bi-tools display-4 text-muted mb-3 d-block"></i>
-                        <p class="text-muted">No maintenance records yet.</p>
-                    </div>
+                <p class="text-muted text-center my-4">No recent maintenance records.</p>
                 {% endif %}
             </div>
         </div>

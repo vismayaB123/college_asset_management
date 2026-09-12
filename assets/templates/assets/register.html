@@ -44,8 +44,8 @@
             <!-- Right Side: Registration Form -->
             <div class="col-lg-7 bg-body p-4 p-md-5">
                 <div class="mb-4">
-                    <h3 class="fw-bold mb-1">Create Administrator Account</h3>
-                    <p class="text-muted small">Register as a System Administrator to securely manage and monitor college assets, equipment, allocations, maintenance, and reports.</p>
+                    <h3 class="fw-bold mb-1">Create User Account</h3>
+                    <p class="text-muted small">Register as a Normal User to submit requests and feedback securely.</p>
                 </div>
                 
                 <form method="post" action="{% url 'assets:register' %}" class="needs-validation" novalidate>
@@ -119,23 +119,7 @@
                         </div>
                     </div>
                     
-                    <div class="mb-4">
-                        <label for="{{ form.admin_registration_code.id_for_label }}" class="form-label small fw-bold text-brand">
-                            <i class="bi bi-shield-lock me-1"></i> Administrator Registration Code
-                        </label>
-                        <div class="input-group">
-                            {{ form.admin_registration_code }}
-                            <button class="btn btn-outline-secondary bg-body-tertiary border-start-0" type="button" tabindex="-1" onclick="toggleVisibility('id_admin_code', 'icon_admin_code')">
-                                <i class="bi bi-eye" id="icon_admin_code"></i>
-                            </button>
-                        </div>
-                        <div class="form-text small">Provided by your IT department.</div>
-                        {% if form.admin_registration_code.errors %}
-                            <div class="text-danger small mt-1">{{ form.admin_registration_code.errors.0 }}</div>
-                        {% endif %}
-                    </div>
-                    
-                    <button type="submit" class="btn btn-brand bg-brand text-white btn-lg w-100 fw-bold mb-4">Create Administrator Account</button>
+                    <button type="submit" class="btn btn-brand bg-brand text-white btn-lg w-100 fw-bold mb-4">Create Account</button>
                     
                     <div class="text-center small text-muted border-top pt-4 mt-2">
                         Already have an account? <a href="{% url 'assets:login' %}" class="fw-bold text-decoration-none text-brand">Sign In</a>

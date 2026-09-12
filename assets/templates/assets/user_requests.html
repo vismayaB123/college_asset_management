@@ -1,0 +1,190 @@
+{% extends 'base.html' %}
+{% block title %}My Support Requests{% endblock %}
+{% block content %}
+<div class="d-flex justify-content-between align-items-center mb-4">
+    <h2><i class="bi bi-headset text-primary me-2"></i>My Support Requests</h2>
+    <div>
+        <button class="btn btn-primary" data-bs-toggle="modal" data-bs-target="#newRequestModal">
+            <i class="bi bi-plus-circle me-1"></i>New Request
+        </button>
+    </div>
+</div>
+
+<div class="card shadow-sm">
+    <div class="card-body">
+        <div class="table-responsive">
+            <table class="table table-hover align-middle">
+                <thead class="table-light">
+                    <tr>
+                        <th>Subject</th>
+                        <th>Type</th>
+                        <th>Asset</th>
+                        <th>Status</th>
+                        <th>Technician Response</th>
+                        <th>Actions</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    {% for req in requests_list %}
+                    <tr>
+                        <td>
+                            <strong>{{ req.subject }}</strong><br>
+                            <small class="text-muted">{{ req.created_at|date:"M d, Y" }}</small>
+                        </td>
+                        <td>{{ req.request_type }}</td>
+                        <td>{{ req.asset.name }}</td>
+                        <td>
+                            {% if req.status == 'PENDING' %}<span class="badge bg-secondary">Pending</span>
+                            {% elif req.status == 'ASSIGNED' %}<span class="badge bg-info">Assigned</span>
+                            {% elif req.status == 'IN_PROGRESS' %}<span class="badge bg-warning text-dark">In Progress</span>
+                            {% elif req.status == 'REJECTED' %}<span class="badge bg-danger">Rejected</span>
+                            {% else %}<span class="badge bg-success">Resolved</span>{% endif %}
+                        </td>
+                        <td>
+                            {% if req.technician_response %}
+                                <button class="btn btn-sm btn-outline-info" data-bs-toggle="modal" data-bs-target="#viewResponse{{ req.id }}">View Response</button>
+                            {% else %}
+                                <span class="text-muted small">No response yet</span>
+                            {% endif %}
+                        </td>
+                        <td>
+                            {% if req.status == 'RESOLVED' and not req.feedback %}
+                                <button class="btn btn-sm btn-outline-success" data-bs-toggle="modal" data-bs-target="#feedbackModal{{ req.id }}">Submit Feedback</button>
+                            {% elif req.feedback %}
+                                <span class="badge bg-success"><i class="bi bi-star-fill"></i> {{ req.feedback.rating }}/5</span>
+                            {% endif %}
+                        </td>
+                    </tr>
+                    
+                    <!-- View Response Modal -->
+                    <div class="modal fade" id="viewResponse{{ req.id }}" tabindex="-1">
+                        <div class="modal-dialog">
+                            <div class="modal-content">
+                                <div class="modal-header">
+                                    <h5 class="modal-title">Technician Response</h5>
+                                    <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+                                </div>
+                                <div class="modal-body">
+                                    <p><strong>Technician:</strong> {{ req.assigned_technician.get_full_name|default:"Unknown" }}</p>
+                                    <p class="text-muted">{{ req.technician_response }}</p>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                    
+                    <!-- Feedback Modal -->
+                    <div class="modal fade" id="feedbackModal{{ req.id }}" tabindex="-1">
+                        <div class="modal-dialog">
+                            <div class="modal-content">
+                                <form method="post" action="{% url 'assets:submit_feedback' req.id %}">
+                                    {% csrf_token %}
+                                    <div class="modal-header">
+                                        <h5 class="modal-title">Submit Feedback</h5>
+                                        <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+                                    </div>
+                                    <div class="modal-body">
+                                        <div class="mb-3">
+                                            <label class="form-label">Rating (1-5)</label>
+                                            <select name="rating" class="form-select" required>
+                                                <option value="5">5 - Excellent</option>
+                                                <option value="4">4 - Good</option>
+                                                <option value="3">3 - Average</option>
+                                                <option value="2">2 - Poor</option>
+                                                <option value="1">1 - Terrible</option>
+                                            </select>
+                                        </div>
+                                        <div class="mb-3">
+                                            <label class="form-label">Feedback</label>
+                                            <textarea name="feedback" class="form-control" rows="3" required></textarea>
+                                        </div>
+                                    </div>
+                                    <div class="modal-footer">
+                                        <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Close</button>
+                                        <button type="submit" class="btn btn-success">Submit Feedback</button>
+                                    </div>
+                                </form>
+                            </div>
+                        </div>
+                    </div>
+                    
+                    {% empty %}
+                    <tr>
+                        <td colspan="6" class="text-center py-4 text-muted">You have no support requests.</td>
+                    </tr>
+                    {% endfor %}
+                </tbody>
+            </table>
+        </div>
+    </div>
+</div>
+
+<!-- New Request Modal -->
+<div class="modal fade" id="newRequestModal" tabindex="-1">
+    <div class="modal-dialog">
+        <div class="modal-content">
+            <form method="post" action="{% url 'assets:user_requests' %}">
+                {% csrf_token %}
+                <div class="modal-header">
+                    <h5 class="modal-title">New Request / Damage Report</h5>
+                    <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+                </div>
+                <div class="modal-body">
+                    <div class="mb-3">
+                        <label class="form-label">Request Type</label>
+                        <select name="request_type" class="form-select" required onchange="toggleDamage(this)">
+                            {% for val, label in request_type_choices %}
+                                <option value="{{ val }}">{{ label }}</option>
+                            {% endfor %}
+                        </select>
+                    </div>
+                    <div class="mb-3">
+                        <label class="form-label">Asset (Optional for Equipment Requests)</label>
+                        <select name="asset_id" class="form-select" id="assetSelect">
+                            <option value="" selected>Select an assigned asset (if applicable)</option>
+                            {% for alloc in my_allocations %}
+                                <option value="{{ alloc.asset.id }}">{{ alloc.asset.name }} ({{ alloc.asset.asset_code }})</option>
+                            {% endfor %}
+                        </select>
+                        <div class="form-text">You can only report issues for equipment assigned to you.</div>
+                    </div>
+                    <div class="mb-3" id="severityGroup" style="display: none;">
+                        <label class="form-label">Severity (For Damage Reports)</label>
+                        <select name="severity" class="form-select">
+                            {% for val, label in severity_choices %}
+                                <option value="{{ val }}">{{ label }}</option>
+                            {% endfor %}
+                        </select>
+                    </div>
+                    <div class="mb-3">
+                        <label class="form-label">Subject</label>
+                        <input type="text" name="subject" class="form-control" required>
+                    </div>
+                    <div class="mb-3">
+                        <label class="form-label">Description / Details</label>
+                        <textarea name="description" class="form-control" rows="3" required></textarea>
+                    </div>
+                </div>
+                <div class="modal-footer">
+                    <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Close</button>
+                    <button type="submit" class="btn btn-primary">Submit</button>
+                </div>
+            </form>
+        </div>
+    </div>
+</div>
+
+<script>
+function toggleDamage(sel) {
+    document.getElementById('severityGroup').style.display = sel.value === 'Damage Report' ? 'block' : 'none';
+    
+    const assetSelect = document.getElementById('assetSelect');
+    if (sel.value === 'Damage Report' || sel.value === 'Maintenance Request') {
+        assetSelect.setAttribute('required', 'required');
+    } else {
+        assetSelect.removeAttribute('required');
+    }
+}
+// Run once on load
+document.addEventListener('DOMContentLoaded', () => toggleDamage(document.querySelector('select[name="request_type"]')));
+</script>
+{% endblock %}

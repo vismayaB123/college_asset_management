@@ -1,0 +1,89 @@
+{% extends "base.html" %}
+
+{% block title %}Technician Dashboard{% endblock %}
+{% block page_title %}Technician Dashboard{% endblock %}
+
+{% block content %}
+<div class="row g-4 mb-4">
+    <div class="col-md-6 col-lg-6">
+        <div class="card border-0 shadow-sm rounded-4 h-100">
+            <div class="card-body p-4">
+                <div class="d-flex align-items-center justify-content-between mb-3">
+                    <h5 class="fw-bold mb-0 text-muted">Total Assets</h5>
+                    <div class="rounded-circle bg-primary bg-opacity-10 d-flex align-items-center justify-content-center" style="width: 48px; height: 48px;">
+                        <i class="bi bi-box-seam text-primary fs-4"></i>
+                    </div>
+                </div>
+                <h2 class="important-number fw-bolder mb-0 display-5">{{ total_assets }}</h2>
+            </div>
+        </div>
+    </div>
+    
+    <div class="col-md-6 col-lg-6">
+        <div class="card border-0 shadow-sm rounded-4 h-100">
+            <div class="card-body p-4">
+                <div class="d-flex align-items-center justify-content-between mb-3">
+                    <h5 class="fw-bold mb-0 text-muted">Under Maintenance</h5>
+                    <div class="rounded-circle bg-danger bg-opacity-10 d-flex align-items-center justify-content-center" style="width: 48px; height: 48px;">
+                        <i class="bi bi-tools text-danger fs-4"></i>
+                    </div>
+                </div>
+                <h2 class="important-number fw-bolder mb-0 display-5">{{ maintenance_assets }}</h2>
+            </div>
+        </div>
+    </div>
+</div>
+
+<div class="row g-4">
+    <div class="col-12">
+        <div class="card border-0 shadow-sm rounded-4 h-100">
+            <div class="card-header bg-white border-0 pt-4 pb-0 px-4 d-flex justify-content-between align-items-center">
+                <h5 class="fw-bold mb-0"><i class="bi bi-tools text-brand me-2"></i>Recent Maintenance</h5>
+                <a href="{% url 'assets:maintenance_list' %}" class="btn btn-sm btn-outline-brand rounded-pill px-3">View All</a>
+            </div>
+            <div class="card-body p-4">
+                {% if recent_maintenance %}
+                <div class="table-responsive">
+                    <table class="table table-hover align-middle mb-0">
+                        <thead class="table-light">
+                            <tr>
+                                <th>Asset</th>
+                                <th>Date</th>
+                                <th>Status</th>
+                                <th>Technician</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            {% for record in recent_maintenance %}
+                            <tr>
+                                <td>
+                                    <div class="fw-bold">{{ record.asset.name }}</div>
+                                    <div class="small text-muted">{{ record.asset.asset_code }}</div>
+                                </td>
+                                <td>{{ record.maintenance_date }}</td>
+                                <td>
+                                    {% if record.status == 'Completed' %}
+                                        <span class="badge bg-success bg-opacity-10 text-success rounded-pill px-3">{{ record.status }}</span>
+                                    {% elif record.status == 'In Progress' %}
+                                        <span class="badge bg-primary bg-opacity-10 text-primary rounded-pill px-3">{{ record.status }}</span>
+                                    {% else %}
+                                        <span class="badge bg-warning bg-opacity-10 text-warning rounded-pill px-3">{{ record.status }}</span>
+                                    {% endif %}
+                                </td>
+                                <td>{{ record.technician|default:"-" }}</td>
+                            </tr>
+                            {% endfor %}
+                        </tbody>
+                    </table>
+                </div>
+                {% else %}
+                <div class="text-center py-5 text-muted">
+                    <i class="bi bi-tools fs-1 d-block mb-3 opacity-50"></i>
+                    <p class="mb-0">No recent maintenance records found.</p>
+                </div>
+                {% endif %}
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}

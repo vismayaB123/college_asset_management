@@ -1,0 +1,93 @@
+{% extends 'base.html' %}
+{% block title %}Technician Requests{% endblock %}
+{% block content %}
+<div class="d-flex justify-content-between align-items-center mb-4">
+    <h2><i class="bi bi-tools text-primary me-2"></i>User Requests</h2>
+</div>
+
+<div class="card shadow-sm">
+    <div class="card-body">
+        <div class="table-responsive">
+            <table class="table table-hover align-middle">
+                <thead class="table-light">
+                    <tr>
+                        <th>User</th>
+                        <th>Subject / Asset</th>
+                        <th>Type</th>
+                        <th>Status</th>
+                        <th>Technician</th>
+                        <th>Actions</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    {% for req in requests_list %}
+                    <tr>
+                        <td>
+                            <strong>{{ req.user.get_full_name|default:req.user.username }}</strong><br>
+                            <small class="text-muted">{{ req.created_at|date:"M d, Y" }}</small>
+                        </td>
+                        <td>
+                            <strong>{{ req.subject }}</strong><br>
+                            <small class="text-muted">{{ req.asset.name }}</small>
+                        </td>
+                        <td>{{ req.request_type }}</td>
+                        <td>
+                            {% if req.status == 'PENDING' %}<span class="badge bg-secondary">Pending</span>
+                            {% elif req.status == 'ASSIGNED' %}<span class="badge bg-info">Assigned</span>
+                            {% elif req.status == 'IN_PROGRESS' %}<span class="badge bg-warning text-dark">In Progress</span>
+                            {% elif req.status == 'REJECTED' %}<span class="badge bg-danger">Rejected</span>
+                            {% else %}<span class="badge bg-success">Resolved</span>{% endif %}
+                        </td>
+                        <td>{{ req.assigned_technician.get_full_name|default:"Unassigned" }}</td>
+                        <td>
+                            <button class="btn btn-sm btn-outline-primary" data-bs-toggle="modal" data-bs-target="#updateReq{{ req.id }}">Update</button>
+                        </td>
+                    </tr>
+                    
+                    <!-- Update Modal -->
+                    <div class="modal fade" id="updateReq{{ req.id }}" tabindex="-1">
+                        <div class="modal-dialog">
+                            <div class="modal-content">
+                                <form method="post" action="{% url 'assets:request_update' req.id %}">
+                                    {% csrf_token %}
+                                    <div class="modal-header">
+                                        <h5 class="modal-title">Update Request</h5>
+                                        <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+                                    </div>
+                                    <div class="modal-body">
+                                        <div class="mb-3">
+                                            <strong>Description:</strong>
+                                            <p class="text-muted">{{ req.description }}</p>
+                                        </div>
+                                        <div class="mb-3">
+                                            <label class="form-label">Status</label>
+                                            <select name="status" class="form-select" required>
+                                                {% for val, label in status_choices %}
+                                                    <option value="{{ val }}" {% if req.status == val %}selected{% endif %}>{{ label }}</option>
+                                                {% endfor %}
+                                            </select>
+                                        </div>
+                                        <div class="mb-3">
+                                            <label class="form-label">Technician Response</label>
+                                            <textarea name="technician_response" class="form-control" rows="3">{{ req.technician_response }}</textarea>
+                                        </div>
+                                    </div>
+                                    <div class="modal-footer">
+                                        <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Close</button>
+                                        <button type="submit" class="btn btn-primary">Save</button>
+                                    </div>
+                                </form>
+                            </div>
+                        </div>
+                    </div>
+                    {% empty %}
+                    <tr>
+                        <td colspan="6" class="text-center py-4 text-muted">No requests found.</td>
+                    </tr>
+                    {% endfor %}
+                </tbody>
+            </table>
+        </div>
+    </div>
+</div>
+{% endblock %}

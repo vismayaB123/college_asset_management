@@ -4,14 +4,13 @@ from django.contrib.auth.password_validation import validate_password
 from django.core.exceptions import ValidationError
 from django.conf import settings
 
-class SystemAdminRegistrationForm(forms.ModelForm):
+class UserRegistrationForm(forms.ModelForm):
     first_name = forms.CharField(max_length=150, required=True, widget=forms.TextInput(attrs={'class': 'form-control form-control-lg bg-body-tertiary'}))
     last_name = forms.CharField(max_length=150, required=True, widget=forms.TextInput(attrs={'class': 'form-control form-control-lg bg-body-tertiary'}))
     username = forms.CharField(max_length=150, required=True, widget=forms.TextInput(attrs={'class': 'form-control form-control-lg bg-body-tertiary'}))
     email = forms.EmailField(required=True, widget=forms.EmailInput(attrs={'class': 'form-control form-control-lg bg-body-tertiary'}))
     password = forms.CharField(widget=forms.PasswordInput(attrs={'class': 'form-control form-control-lg bg-body-tertiary border-end-0', 'id': 'id_password'}), required=True)
     password_confirm = forms.CharField(widget=forms.PasswordInput(attrs={'class': 'form-control form-control-lg bg-body-tertiary border-end-0', 'id': 'id_password_confirm'}), required=True, label="Confirm Password")
-    admin_registration_code = forms.CharField(widget=forms.PasswordInput(attrs={'class': 'form-control form-control-lg bg-body-tertiary border-end-0', 'id': 'id_admin_code'}), required=True, label="Administrator Registration Code")
 
     class Meta:
         model = User
@@ -28,12 +27,6 @@ class SystemAdminRegistrationForm(forms.ModelForm):
         if username and User.objects.filter(username__iexact=username).exists():
             raise ValidationError("An account with this username already exists.")
         return username
-
-    def clean_admin_registration_code(self):
-        code = self.cleaned_data.get('admin_registration_code')
-        if code != settings.ADMIN_REGISTRATION_CODE:
-            raise ValidationError("Invalid administrator registration code.")
-        return code
 
     def clean(self):
         cleaned_data = super().clean()

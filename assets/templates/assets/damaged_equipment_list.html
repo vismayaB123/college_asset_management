@@ -1,0 +1,100 @@
+{% extends 'base.html' %}
+{% block title %}Damaged Equipment{% endblock %}
+{% block content %}
+<div class="d-flex justify-content-between align-items-center mb-4">
+    <h2><i class="bi bi-exclamation-triangle text-danger me-2"></i>Damaged Equipment</h2>
+</div>
+
+<div class="card shadow-sm">
+    <div class="card-body">
+        <div class="table-responsive">
+            <table class="table table-hover align-middle">
+                <thead class="table-light">
+                    <tr>
+                        <th>Asset</th>
+                        <th>Reported By</th>
+                        <th>Date</th>
+                        <th>Severity</th>
+                        <th>Status</th>
+                        <th>Technician</th>
+                        <th>Actions</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    {% for report in damage_reports %}
+                    <tr>
+                        <td>
+                            <strong>{{ report.asset.name }}</strong><br>
+                            <small class="text-muted">{{ report.asset.asset_code }}</small>
+                        </td>
+                        <td>{{ report.reported_by.get_full_name|default:report.reported_by.username }}</td>
+                        <td>{{ report.damage_date }}</td>
+                        <td>
+                            {% if report.severity == 'CRITICAL' %}<span class="badge bg-danger">Critical</span>
+                            {% elif report.severity == 'HIGH' %}<span class="badge bg-warning text-dark">High</span>
+                            {% elif report.severity == 'MEDIUM' %}<span class="badge bg-secondary">Medium</span>
+                            {% else %}<span class="badge bg-info">Low</span>{% endif %}
+                        </td>
+                        <td>
+                            {% if report.status == 'REPORTED' %}<span class="badge bg-secondary">Reported</span>
+                            {% elif report.status == 'UNDER_REVIEW' %}<span class="badge bg-info">Under Review</span>
+                            {% elif report.status == 'UNDER_REPAIR' %}<span class="badge bg-warning text-dark">Under Repair</span>
+                            {% else %}<span class="badge bg-success">Resolved</span>{% endif %}
+                        </td>
+                        <td>{{ report.assigned_technician.get_full_name|default:"Unassigned" }}</td>
+                        <td>
+                            {% if request.user.profile.role == 'TECHNICIAN' or request.user.profile.role == 'SYSTEM_ADMIN' %}
+                                <button class="btn btn-sm btn-outline-primary" data-bs-toggle="modal" data-bs-target="#updateReport{{ report.id }}">
+                                    Update
+                                </button>
+                            {% endif %}
+                        </td>
+                    </tr>
+                    
+                    <!-- Update Modal -->
+                    <div class="modal fade" id="updateReport{{ report.id }}" tabindex="-1">
+                        <div class="modal-dialog">
+                            <div class="modal-content">
+                                <form method="post" action="{% url 'assets:damaged_equipment_update' report.id %}">
+                                    {% csrf_token %}
+                                    <div class="modal-header">
+                                        <h5 class="modal-title">Update Damage Report</h5>
+                                        <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+                                    </div>
+                                    <div class="modal-body">
+                                        <div class="mb-3">
+                                            <strong>Description:</strong>
+                                            <p class="text-muted">{{ report.damage_description }}</p>
+                                        </div>
+                                        <div class="mb-3">
+                                            <label class="form-label">Status</label>
+                                            <select name="status" class="form-select" required>
+                                                {% for val, label in status_choices %}
+                                                    <option value="{{ val }}" {% if report.status == val %}selected{% endif %}>{{ label }}</option>
+                                                {% endfor %}
+                                            </select>
+                                        </div>
+                                        <div class="mb-3">
+                                            <label class="form-label">Resolution Details</label>
+                                            <textarea name="resolution" class="form-control" rows="3">{{ report.resolution }}</textarea>
+                                        </div>
+                                    </div>
+                                    <div class="modal-footer">
+                                        <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Close</button>
+                                        <button type="submit" class="btn btn-primary">Save Changes</button>
+                                    </div>
+                                </form>
+                            </div>
+                        </div>
+                    </div>
+                    {% empty %}
+                    <tr>
+                        <td colspan="7" class="text-center py-4 text-muted">No damaged equipment reports found.</td>
+                    </tr>
+                    {% endfor %}
+                </tbody>
+            </table>
+        </div>
+    </div>
+</div>
+{% endblock %}

@@ -55,4 +55,23 @@ urlpatterns = [
     path("maintenance/add/", views.maintenance_add, name="maintenance_add"),
     path("maintenance/edit/<int:pk>/", views.maintenance_edit, name="maintenance_edit"),
     path("maintenance/delete/<int:pk>/", views.maintenance_delete, name="maintenance_delete"),
+
+    # Phase 3: Damaged Equipment
+    path('damaged-equipment/', views.damaged_equipment_list, name='damaged_equipment_list'),
+    path('damaged-equipment/<int:pk>/update/', views.damaged_equipment_update, name='damaged_equipment_update'),
+    
+    # Phase 4: User Requests
+    path('requests/', views.user_requests, name='user_requests'),
+    path('technician-requests/', views.technician_requests, name='technician_requests'),
+    path('requests/<int:pk>/update/', views.request_update, name='request_update'),
+    
+    # Phase 5: Feedback
+    path('requests/<int:pk>/feedback/', views.submit_feedback, name='submit_feedback'),
+
+    # Phase 6: Admin People & Feedback
+    path('users/', views.user_list, name='user_list'),
+    path('technicians/', views.technician_list, name='technician_list'),
+    path('user-action/<str:action>/<int:user_id>/', views.user_action, name='user_action'),
+    path('technician-action/<str:action>/<int:user_id>/', views.technician_action, name='technician_action'),
+    path('feedback/', views.feedback_list, name='feedback_list'),
 ]

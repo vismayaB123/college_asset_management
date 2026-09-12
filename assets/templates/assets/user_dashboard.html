@@ -1,0 +1,129 @@
+{% extends 'base.html' %}
+{% block title %}My Equipment{% endblock %}
+{% block content %}
+<div class="d-flex justify-content-between align-items-center mb-4">
+    <h2><i class="bi bi-speedometer2 text-primary me-2"></i>Dashboard</h2>
+    <div>
+        <a href="{% url 'assets:user_requests' %}" class="btn btn-primary">
+            <i class="bi bi-headset me-1"></i> Request Support / Report Damage
+        </a>
+    </div>
+</div>
+
+<div class="row mb-4">
+    <div class="col-md-3">
+        <div class="card bg-primary text-white h-100 shadow-sm">
+            <div class="card-body">
+                <div class="d-flex justify-content-between align-items-center">
+                    <div>
+                        <h6 class="text-uppercase mb-1">My Equipment</h6>
+                        <h2 class="mb-0">{{ my_equipment_count }}</h2>
+                    </div>
+                    <div class="display-4 opacity-50">
+                        <i class="bi bi-pc-display"></i>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+    <div class="col-md-3">
+        <div class="card bg-info text-white h-100 shadow-sm">
+            <div class="card-body">
+                <div class="d-flex justify-content-between align-items-center">
+                    <div>
+                        <h6 class="text-uppercase mb-1">Active Requests</h6>
+                        <h2 class="mb-0">{{ active_requests_count }}</h2>
+                    </div>
+                    <div class="display-4 opacity-50">
+                        <i class="bi bi-headset"></i>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+    <div class="col-md-3">
+        <div class="card bg-warning text-dark h-100 shadow-sm">
+            <div class="card-body">
+                <div class="d-flex justify-content-between align-items-center">
+                    <div>
+                        <h6 class="text-uppercase mb-1">Open Issues</h6>
+                        <h2 class="mb-0">{{ open_issues_count }}</h2>
+                    </div>
+                    <div class="display-4 opacity-50">
+                        <i class="bi bi-exclamation-triangle"></i>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+    <div class="col-md-3">
+        <div class="card bg-success text-white h-100 shadow-sm">
+            <div class="card-body">
+                <div class="d-flex justify-content-between align-items-center">
+                    <div>
+                        <h6 class="text-uppercase mb-1">Resolved Requests</h6>
+                        <h2 class="mb-0">{{ resolved_requests_count }}</h2>
+                    </div>
+                    <div class="display-4 opacity-50">
+                        <i class="bi bi-check-circle"></i>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<div class="d-flex justify-content-between align-items-center mb-3 mt-4">
+    <h4><i class="bi bi-pc-display text-primary me-2"></i>My Equipment</h4>
+</div>
+
+<style>
+.equipment-card {
+    transition: all 0.3s ease;
+    cursor: pointer;
+    border-left: 4px solid var(--sidebar-bg) !important;
+}
+.equipment-card:hover {
+    transform: translateY(-5px);
+    box-shadow: 0 10px 20px rgba(0,0,0,0.1) !important;
+}
+</style>
+
+<div class="row g-4">
+    {% for alloc in request.user.allocations.all %}
+    {% if alloc.status != 'Returned' %}
+    <div class="col-lg-4 col-md-6">
+        <div class="card h-100 shadow-sm border-0 position-relative equipment-card" onclick="window.location.href='{% url 'assets:user_requests' %}'">
+            <div class="card-body">
+                <div class="d-flex justify-content-between mb-3">
+                    <span class="badge bg-success-subtle text-success rounded-pill px-3 py-2">Active</span>
+                    <i class="bi bi-pc-display fs-4 text-muted"></i>
+                </div>
+                <h5 class="fw-bold mb-1" style="color: var(--sidebar-bg);">{{ alloc.asset.name }}</h5>
+                <p class="text-muted small mb-3">{{ alloc.asset.asset_code }}</p>
+                
+                <div class="d-flex justify-content-between align-items-center mb-2">
+                    <span class="small fw-medium text-secondary"><i class="bi bi-diagram-3 me-1"></i>{{ alloc.asset.category.name }}</span>
+                    <span class="small fw-medium text-secondary"><i class="bi bi-box me-1"></i>Qty: {{ alloc.active_quantity }}</span>
+                </div>
+                <div class="d-flex justify-content-between align-items-center">
+                    <span class="small fw-medium text-secondary"><i class="bi bi-calendar3 me-1"></i>Assigned: {{ alloc.allocation_date }}</span>
+                </div>
+            </div>
+            <div class="card-footer bg-white border-top-0 pt-0 pb-3">
+                <a href="{% url 'assets:user_requests' %}" class="btn btn-outline-primary btn-sm w-100 mt-2">
+                    <i class="bi bi-exclamation-triangle me-1"></i> Report Issue
+                </a>
+            </div>
+        </div>
+    </div>
+    {% endif %}
+    {% empty %}
+    <div class="col-12 text-center py-5 bg-white rounded-3 shadow-sm">
+        <i class="bi bi-box-seam display-1 text-muted opacity-50 mb-3 d-block"></i>
+        <h4 class="text-muted">No equipment assigned</h4>
+        <p class="text-muted">You currently do not have any equipment assigned to your account.</p>
+    </div>
+    {% endfor %}
+</div>
+{% endblock %}
